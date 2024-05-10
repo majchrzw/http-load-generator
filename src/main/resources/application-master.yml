@@ -1,0 +1,7 @@
+spring:
+    application:
+        name: load-tester
+    artemis:
+        mode: embedded
+    jms:
+        pub-sub-domain: true

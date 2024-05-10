@@ -1,0 +1,39 @@
+{
+  "id" : "9aacf981-9999-437c-9f2f-bbab5ac607fb",
+  "name" : "Embedded Test Broker",
+  "modelVersion" : "9.1",
+  "authenticationproviders" : [ {
+    "id" : "2db3974f-2e60-4f89-97c6-dbc61a50a76d",
+    "name" : "password",
+    "type" : "Plain",
+    "secureOnlyMechanisms" : [ ],
+    "users" : [ {
+      "id" : "5babd87a-ac0b-4496-8fc9-4bd603b8b5c3",
+      "name" : "guest",
+      "password" : "guest",
+      "type" : "managed"
+    } ]
+  } ],
+  "ports" : [ {
+    "id" : "bb79189a-f3b0-403b-be32-7e5dbfb9cc68",
+    "name" : "AMQP",
+    "port" : "${qpid.amqp_port}",
+    "authenticationProvider" : "password",
+    "virtualhostaliases" : [ {
+      "id" : "7e37dc91-0f6d-4b07-b29c-a5b12639beb2",
+      "name" : "defaultAlias",
+      "type" : "defaultAlias"
+    } ]
+  } ],
+  "virtualhostnodes" : [ {
+    "id" : "d9edebac-350c-424f-ac8b-89552a59e12a",
+    "name" : "default",
+    "type" : "Memory",
+    "defaultVirtualHostNode" : "true",
+    "virtualHostInitialConfiguration" : "{}",
+    "lastUpdatedBy" : null,
+    "lastUpdatedTime" : 1715359964087,
+    "createdBy" : null,
+    "createdTime" : 1715359964012
+  } ]
+}

@@ -1,17 +1,8 @@
 package pl.majchrzw.loadtester.shared;
 
-import com.google.common.collect.Multimap;
-import org.apache.commons.collections.MultiHashMap;
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.springframework.stereotype.Service;
 
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,7 +20,7 @@ public class RequestExecutor {
 				.build();
 	}
 	
-	public void run(){
+	public void run() {
 	
 	}
 	

@@ -1,6 +1,7 @@
 package pl.majchrzw.loadtester.master;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections.map.MultiValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -8,14 +9,14 @@ import org.springframework.stereotype.Service;
 import pl.majchrzw.loadtester.dto.MasterRequestConfig;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.RequestInfo;
+import pl.majchrzw.loadtester.shared.ServiceWorker;
 import pl.majchrzw.loadtester.shared.messaging.MessagingService;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Service
-public class MasterService {
+public class MasterService implements ServiceWorker {
 	
 	private MasterRequestConfig requestConfig;
 	private final Logger logger = LoggerFactory.getLogger(MasterService.class);
@@ -25,6 +26,7 @@ public class MasterService {
 		this.messagingService = messagingService;
 	}
 	
+	@Override
 	public void run() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ClassPathResource requestsResource = new ClassPathResource("requests.json");
@@ -38,9 +40,10 @@ public class MasterService {
 		final int nodes = requestConfig.nodes() + 1;
 		List<RequestInfo> masterRequestsList = new ArrayList<>();
 		List<RequestInfo> nodeRequestsList = new ArrayList<>();
-		for ( RequestInfo requestInfo: requestConfig.requests()){
+		for (RequestInfo requestInfo : requestConfig.requests()) {
 			// prepare headers
-			HashMap<String, String> requestHeaders = new HashMap<>(requestConfig.defaultHeaders());
+			MultiValueMap requestHeaders = new MultiValueMap();
+			requestHeaders.putAll(requestConfig.defaultHeaders());
 			requestHeaders.putAll(requestInfo.headers());
 			// prepare amount
 			int baseAmount = requestInfo.count() / nodes;
@@ -61,39 +64,5 @@ public class MasterService {
 		System.out.println("Transmitted");
 	}
 	
-	
-	/*
-	private void tmp(int nodes){
-		NodeRequestConfig[] nodeRequestConfigs = new NodeRequestConfig[nodes];
-		
-		for (int i = 0; i < nodes; i++) {
-			int nodeId = i;
-			nodeRequestConfigs[i] = new NodeRequestConfig(
-					requestConfig.requests()
-							.stream()
-							.map(requestInfo -> {
-								int requestAmount = requestInfo.count() / nodes;
-								if (requestInfo.count() % nodes != 0 && nodeId == 0) {
-									requestAmount += requestInfo.count() % nodes;
-								}
-								
-								HashMap<String, String> headers = new HashMap<>(requestConfig.defaultHeaders());
-								headers.putAll(requestInfo.headers());
-								
-								return new RequestInfo(
-										requestInfo.method(),
-										requestInfo.uri(),
-										headers,
-										requestInfo.body(),
-										requestInfo.name(),
-										requestAmount
-								);
-							}).toList());
-		}
-		
-		for (NodeRequestConfig config : nodeRequestConfigs) {
-			System.out.println(config.requests().toString());
-		}
-		*/
-	}
+}
 

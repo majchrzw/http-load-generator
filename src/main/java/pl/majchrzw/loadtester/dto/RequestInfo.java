@@ -1,11 +1,13 @@
 package pl.majchrzw.loadtester.dto;
 
+import org.apache.commons.collections.map.MultiValueMap;
+
 import java.util.HashMap;
 
 public record RequestInfo(
 		HttpMethod method,
 		String uri,
-		HashMap<String, String> headers,
+		MultiValueMap headers,
 		String body,
 		String name,
 		int count

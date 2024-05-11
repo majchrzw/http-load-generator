@@ -3,10 +3,10 @@ package pl.majchrzw.loadtester.shared.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.activemq.artemis.core.server.Queue;
-import org.apache.activemq.artemis.core.server.impl.QueueImpl;
+import org.apache.activemq.artemis.jms.client.ActiveMQQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class MessagingService {
 		logger.info("Initialized");
 	}
 	
-	public void transmit(NodeRequestConfig config){
+	public void transmit(NodeRequestConfig config) {
 		template.setPubSubDomain(true);
 		try {
 			String msg = objectMapper.writeValueAsString(config);
@@ -39,7 +39,7 @@ public class MessagingService {
 	}
 	
 	@JmsListener(destination = topicName)
-	public void receive(String config){
+	public void receive(String config) {
 		System.out.println("Receiving: " + config);
 	}
 }

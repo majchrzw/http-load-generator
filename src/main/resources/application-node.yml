@@ -6,3 +6,9 @@ spring:
         broker-url: tcp://localhost:61616
     jms:
         pub-sub-domain: true
+logging:
+    level:
+        org:
+            apache:
+                activemq:
+                    audit: WARN

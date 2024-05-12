@@ -5,3 +5,9 @@ spring:
         mode: embedded
     jms:
         pub-sub-domain: true
+logging:
+    level:
+      org:
+          apache:
+              activemq:
+                  audit: WARN

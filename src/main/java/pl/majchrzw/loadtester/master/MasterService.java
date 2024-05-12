@@ -4,26 +4,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import pl.majchrzw.loadtester.dto.MasterRequestConfig;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.RequestInfo;
+import pl.majchrzw.loadtester.shared.RequestExecutor;
 import pl.majchrzw.loadtester.shared.ServiceWorker;
-import pl.majchrzw.loadtester.shared.messaging.MessagingService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Profile("master")
 public class MasterService implements ServiceWorker {
 	
 	private MasterRequestConfig requestConfig;
 	private final Logger logger = LoggerFactory.getLogger(MasterService.class);
-	private final MessagingService messagingService;
+	private final MasterMessagingService messagingService;
 	
-	public MasterService(MessagingService messagingService) {
+	private RequestExecutor executor;
+	
+	public MasterService(MasterMessagingService messagingService) {
 		this.messagingService = messagingService;
+		this.executor = new RequestExecutor();
 	}
 	
 	@Override
@@ -54,14 +59,15 @@ public class MasterService implements ServiceWorker {
 		}
 		
 		try {
-			Thread.sleep(1000 * 15);
+			while ( messagingService.getReadinessList().size() < requestConfig.nodes()){
+				Thread.sleep(500);
+			}
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-		
+		logger.info("All nodes are ready, sending configuration");
 		//TODO wysłać konfiguracje do wszystkich node-ów
 		messagingService.transmit(new NodeRequestConfig(nodeRequestsList));
-		System.out.println("Transmitted");
 	}
 	
 }

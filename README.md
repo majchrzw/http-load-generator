@@ -4,4 +4,4 @@
 ### Master
 `mvn spring-boot:run -D"spring-boot.run.profiles=master"`
 ### Node
-`mvn spring-boot:run -D"spring-boot.run.profiles=master"`gi
+`mvn spring-boot:run -D"spring-boot.run.profiles=node"`

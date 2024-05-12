@@ -1,4 +1,4 @@
-package pl.majchrzw.loadtester.shared.config;
+package pl.majchrzw.loadtester.master.config;
 
 import org.springframework.boot.autoconfigure.jms.artemis.ArtemisConfigurationCustomizer;
 import org.springframework.context.annotation.Configuration;

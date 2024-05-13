@@ -33,5 +33,6 @@ public class LoadTesterApplication implements CommandLineRunner {
 			context.getBean(NodeService.class).run();
 			// TODO - node oczekuje na konfigurację od mastera, po wysłaniu ACK zaczyna wysyłać zapytania
 		}
+		context.close();
 	}
 }

@@ -19,27 +19,29 @@ import java.util.List;
 @Service
 @Profile("master")
 public class MasterService implements ServiceWorker {
-	
-	private MasterRequestConfig requestConfig;
 	private final Logger logger = LoggerFactory.getLogger(MasterService.class);
 	private final MasterMessagingService messagingService;
+	private final MasterDao dao;
 	
 	private RequestExecutor executor;
 	
-	public MasterService(MasterMessagingService messagingService) {
+	public MasterService(MasterMessagingService messagingService, MasterDao dao, RequestExecutor executor) {
 		this.messagingService = messagingService;
-		this.executor = new RequestExecutor();
+		this.dao = dao;
+		this.executor = executor;
 	}
 	
 	@Override
 	public void run() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ClassPathResource requestsResource = new ClassPathResource("requests.json");
+		MasterRequestConfig requestConfig;
 		try {
 			requestConfig = objectMapper.readValue(requestsResource.getFile(), MasterRequestConfig.class);
 		} catch (Exception e) {
-			// TODO - tutaj poprawić obsługę wyjątków (przejrzeć edge case-y, ew. zamykać program)
+			// jak źle wczyta config to po prostu się zamyka
 			logger.warn(e.getMessage());
+			return;
 		}
 		
 		final int nodes = requestConfig.nodes() + 1;
@@ -57,17 +59,25 @@ public class MasterService implements ServiceWorker {
 			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount + remainder));
 			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount));
 		}
+		dao.setRequestConfig(new NodeRequestConfig(masterRequestsList));
 		
 		try {
-			while ( messagingService.getReadinessList().size() < requestConfig.nodes()){
+			while ( dao.numberOfReadyNodes() < requestConfig.nodes()){
 				Thread.sleep(500);
 			}
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+		
 		logger.info("All nodes are ready, sending configuration");
-		//TODO wysłać konfiguracje do wszystkich node-ów
-		messagingService.transmit(new NodeRequestConfig(nodeRequestsList));
+		messagingService.transmitConfiguration(new NodeRequestConfig(nodeRequestsList));
+
+		processStatistics();
+	}
+	
+	private void processStatistics(){
+		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
+		dao.getAllExecutionStatistics().forEach( (uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
 	}
 	
 }

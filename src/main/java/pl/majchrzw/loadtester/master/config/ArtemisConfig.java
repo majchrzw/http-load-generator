@@ -4,6 +4,7 @@ import org.springframework.boot.autoconfigure.jms.artemis.ArtemisConfigurationCu
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+
 @Profile("master")
 @Configuration
 public class ArtemisConfig implements ArtemisConfigurationCustomizer {
@@ -15,4 +16,5 @@ public class ArtemisConfig implements ArtemisConfigurationCustomizer {
 			throw new RuntimeException(e);
 		}
 	}
+	
 }

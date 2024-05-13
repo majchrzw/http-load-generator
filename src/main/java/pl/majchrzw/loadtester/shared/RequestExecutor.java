@@ -1,41 +1,38 @@
 package pl.majchrzw.loadtester.shared;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
+
 import java.net.http.HttpClient;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+@Component
 public class RequestExecutor {
 	
-	private ExecutorService executorService;
+	private final ExecutorService executorService;
 	
 	private HttpClient httpClient;
 	
-	public RequestExecutor() {
+	private final DataRepository dao;
+	
+	private final Logger logger = LoggerFactory.getLogger(RequestExecutor.class);
+	
+	public RequestExecutor(DataRepository dao) {
+		this.dao = dao;
 		executorService = Executors.newVirtualThreadPerTaskExecutor();
-		//httpClient = HttpClient.newBuilder()
-		//		.executor(executorService)
-		//		.build();
+		httpClient = HttpClient.newBuilder()
+				.executor(executorService)
+				.build();
 	}
 	
 	public void run() {
-		//System.setProperty("jdk.virtualThreadScheduler.parallelism", String.valueOf(10));
-		//System.setProperty("jdk.virtualThreadScheduler.maxPoolSize", String.valueOf(10));
-		
-		//System.out.println(System.getProperty("jdk.virtualThreadScheduler.parallelism"));
-		//System.out.println(System.getProperty("jdk.virtualThreadScheduler.maxPoolSize"));
-		//System.out.println(System.getProperty("jdk.virtualThreadScheduler.minRunnable"));
-		for (int i = 0; i < 10; i++) {
-			var test = executorService.submit(() -> {
-				System.out.println("Task of thread: " + Thread.currentThread().toString());
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-				System.out.println("Ended thread: " + Thread.currentThread().toString());
-			});
-		}
+		logger.info("Running http requests load");
+		// TODO-to powinno czekać z zakończeniem wszystkich request-ów, tworzyć obiekt ze statystyki zapisywać do DAO
+		NodeExecutionStatistics statistics = null;
+		dao.setExecutionStatistics(statistics);
 	}
 	
 }

@@ -1,7 +1,5 @@
 package pl.majchrzw.loadtester.node;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -10,69 +8,52 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 import pl.majchrzw.loadtester.dto.Action;
-import pl.majchrzw.loadtester.dto.NodeStatusChange;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
-import pl.majchrzw.loadtester.master.MasterMessagingService;
-
-import java.util.UUID;
+import pl.majchrzw.loadtester.dto.NodeStatusChange;
 
 
 @Component
 @Profile("node")
 public class NodeMessagingService implements DisposableBean {
 	
-	private final JmsTemplate template;
-	
-	private final ObjectMapper objectMapper = new ObjectMapper();
-	
 	private final String configurationTopic = "configuration";
 	private final String readinessTopic = "readiness";
-	private NodeRequestConfig requestConfig;
+	private final String statisticsTopic = "statistics";
 	
-	private UUID nodeId;
+	private final NodeDao dao;
+	private final JmsTemplate template;
 	
-	Logger logger = LoggerFactory.getLogger(MasterMessagingService.class);
+	Logger logger = LoggerFactory.getLogger(NodeMessagingService.class);
 	
-	public NodeMessagingService(JmsTemplate template) {
+	public NodeMessagingService(JmsTemplate template, NodeDao dao) {
 		this.template = template;
+		this.dao = dao;
 		template.setPubSubDomain(true);
-		
 	}
 	
-	public void transmit(UUID nodeId) {
-		this.nodeId = nodeId;
-		String msg;
-		NodeStatusChange startup = new NodeStatusChange(nodeId, Action.START);
-		try {
-			msg = objectMapper.writeValueAsString(startup);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-		template.convertAndSend(readinessTopic, msg);
-		logger.info("Transmitted id to master from node: " + msg);
+	public void transmitReadiness() {
+		NodeStatusChange startup = new NodeStatusChange(dao.getId(), Action.START);
+		template.convertAndSend(readinessTopic, startup);
+		logger.info("Transmitted id to master from node: " + startup);
+	}
+	
+	public void transmitStatistics() {
+		template.convertAndSend(statisticsTopic, dao.getStatistics());
+		logger.info("Transmitted execution statistics to master from node: " + dao.getId());
 	}
 	
 	@JmsListener(destination = configurationTopic)
-	public void receive(String config) {
+	public void receiveConfiguration(NodeRequestConfig config) {
 		logger.info("Received request config from master: " + config);
-		try {
-			requestConfig = objectMapper.readValue(config, NodeRequestConfig.class);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
+		dao.setRequestConfig(config);
+		dao.setReceivedConfigurationStatus();
 	}
 	
 	
 	@Override
 	public void destroy() {
-		String msg;
-		NodeStatusChange startup = new NodeStatusChange(nodeId, Action.STOP);
-		try {
-			msg = objectMapper.writeValueAsString(startup);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-		template.convertAndSend(readinessTopic, msg);
-		logger.info("Transmitted unexpected shutdown to master from node: " + msg);
+		NodeStatusChange shutdown = new NodeStatusChange(dao.getId(), Action.STOP);
+		template.convertAndSend(readinessTopic, shutdown);
+		logger.info("Transmitted shutdown to master from node: " + dao.getId());
 	}
 }

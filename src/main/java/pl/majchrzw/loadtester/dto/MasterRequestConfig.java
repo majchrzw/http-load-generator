@@ -8,6 +8,7 @@ import java.util.List;
 public record MasterRequestConfig(
 		List<RequestInfo> requests,
 		int nodes,
-		MultiValueMap defaultHeaders
+		MultiValueMap defaultHeaders,
+		Long timeoutInMs
 ) {
 }

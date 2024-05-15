@@ -3,7 +3,9 @@ package pl.majchrzw.loadtester.shared;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import pl.majchrzw.loadtester.dto.NodeBundleExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
+import pl.majchrzw.loadtester.dto.NodeSingleExecutionStatistics;
 import pl.majchrzw.loadtester.dto.RequestInfo;
 
 import java.io.IOException;
@@ -13,6 +15,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,21 +42,30 @@ public class RequestExecutor {
 	
 	public void run() {
 		logger.info("Running http requests load");
+		List<NodeBundleExecutionStatistics> bundleExecutionStatistics = new ArrayList<>(dao.getRequestConfig().requests().size());
 		for(RequestInfo request:dao.getRequestConfig().requests()){
-			this.executeRequestsBudle(request);
+			NodeBundleExecutionStatistics bundle =this.executeRequestsBundle(request);
+			bundleExecutionStatistics.add(bundle);
 		}
-		// TODO-to powinno czekać z zakończeniem wszystkich request-ów, tworzyć obiekt ze statystyki zapisywać do DAO
-		NodeExecutionStatistics statistics = null;
+		NodeExecutionStatistics statistics = new NodeExecutionStatistics(dao.getId(),bundleExecutionStatistics);
 		dao.setExecutionStatistics(statistics);
 	}
 
-	private void executeRequestsBudle(RequestInfo request) {
+	private NodeBundleExecutionStatistics executeRequestsBundle(RequestInfo request) {
 		try{
+			List<NodeSingleExecutionStatistics> executionStatistics = new ArrayList<>(request.count());
 			HttpRequest httpRequest = this.prepreRequest(request);
+			for(int i = 0; i < request.count(); i++){
+				NodeSingleExecutionStatistics statistics = this.handleRequest(httpRequest);
+				executionStatistics.add(statistics);
+			}
+			return new NodeBundleExecutionStatistics(executionStatistics, request);
 
 		}catch (Exception e) {
+			//TODO dodac lepsza obsluge bledow
 			logger.error("Error while executing request: " + request.name(), e);
 		}
+		return null;
 	}
 
 	private HttpRequest prepreRequest(RequestInfo requestInfo) throws URISyntaxException {
@@ -64,12 +77,12 @@ public class RequestExecutor {
 				.build();
 	}
 
-	private void handleRequest(HttpRequest request) throws IOException, InterruptedException {
+	private NodeSingleExecutionStatistics handleRequest(HttpRequest request) throws IOException, InterruptedException {
 		long start = System.currentTimeMillis();
 		HttpResponse response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		long end = System.currentTimeMillis();
 		long elapsedTime = end - start;
-
+		return new NodeSingleExecutionStatistics(elapsedTime,response.statusCode());
 	}
 
 }

@@ -1,4 +1,9 @@
 package pl.majchrzw.loadtester.dto;
 
-public record NodeBundleExecutionStatistics() {
+import java.util.List;
+
+public record NodeBundleExecutionStatistics(
+        List<NodeSingleExecutionStatistics> executionStatistics,
+        RequestInfo requestInfo
+) {
 }

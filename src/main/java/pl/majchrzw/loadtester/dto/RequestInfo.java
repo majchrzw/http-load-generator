@@ -10,6 +10,7 @@ public record RequestInfo(
 		MultiValueMap headers,
 		String body,
 		String name,
+		Long timeout,
 		int count
 ) {
 }

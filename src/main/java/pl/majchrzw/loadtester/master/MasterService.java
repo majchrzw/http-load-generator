@@ -56,10 +56,10 @@ public class MasterService implements ServiceWorker {
 			int baseAmount = requestInfo.count() / nodes;
 			int remainder = requestInfo.count() % nodes;
 			
-			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount + remainder));
-			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount));
+			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), requestInfo.timeout(),baseAmount + remainder));
+			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(),requestInfo.timeout(), baseAmount));
 		}
-		dao.setRequestConfig(new NodeRequestConfig(masterRequestsList,requestConfig.timeoutInMs()));
+		dao.setRequestConfig(new NodeRequestConfig(masterRequestsList));
 		
 		try {
 			while ( dao.numberOfReadyNodes() < requestConfig.nodes()){
@@ -70,7 +70,7 @@ public class MasterService implements ServiceWorker {
 		}
 		
 		logger.info("All nodes are ready, sending configuration");
-		messagingService.transmitConfiguration(new NodeRequestConfig(nodeRequestsList,requestConfig.timeoutInMs()));
+		messagingService.transmitConfiguration(new NodeRequestConfig(nodeRequestsList));
 
 		processStatistics();
 	}

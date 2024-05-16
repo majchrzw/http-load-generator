@@ -15,18 +15,20 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Objects;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Component
 public class RequestExecutor {
 	
 	private final ExecutorService executorService;
-	
+
 	private HttpClient httpClient;
-	
+
 	private final DataRepository dao;
 	
 	private final Logger logger = LoggerFactory.getLogger(RequestExecutor.class);
@@ -34,15 +36,16 @@ public class RequestExecutor {
 	public RequestExecutor(DataRepository dao) {
 		this.dao = dao;
 		executorService = Executors.newVirtualThreadPerTaskExecutor();
-		httpClient = HttpClient.newBuilder()
-				.executor(executorService)
-				.connectTimeout(Duration.ofMillis(dao.getRequestConfig().timeoutInMs()))
-				.build();
 	}
 	
 	public void run() {
 		logger.info("Running http requests load");
 		List<NodeBundleExecutionStatistics> bundleExecutionStatistics = new ArrayList<>(dao.getRequestConfig().requests().size());
+		if(httpClient == null)
+			httpClient = HttpClient.newBuilder()
+					.executor(executorService)
+					.build();
+
 		for(RequestInfo request:dao.getRequestConfig().requests()){
 			NodeBundleExecutionStatistics bundle =this.executeRequestsBundle(request);
 			bundleExecutionStatistics.add(bundle);
@@ -53,12 +56,36 @@ public class RequestExecutor {
 
 	private NodeBundleExecutionStatistics executeRequestsBundle(RequestInfo request) {
 		try{
-			List<NodeSingleExecutionStatistics> executionStatistics = new ArrayList<>(request.count());
-			HttpRequest httpRequest = this.prepreRequest(request);
-			for(int i = 0; i < request.count(); i++){
-				NodeSingleExecutionStatistics statistics = this.handleRequest(httpRequest);
-				executionStatistics.add(statistics);
+			Integer delayOfRequests=100;
+			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+			List<CompletableFuture<NodeSingleExecutionStatistics>> executionStatisticsFuture = new ArrayList<>(request.count());
+			HttpRequest httpRequest = this.prepareRequest(request);
+			for(int i=0; i<request.count();i++){
+				scheduler.schedule(()->{
+					CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture= handleAsyncRequest(httpRequest);
+					executionStatisticsFuture.add(nodeSingleExecutionStatisticsCompletableFuture);
+				},i*delayOfRequests, TimeUnit.MICROSECONDS);
 			}
+			scheduler.shutdown();
+			try {
+				scheduler.awaitTermination(1, TimeUnit.HOURS);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			CompletableFuture<Void> allOf = CompletableFuture.allOf(executionStatisticsFuture.toArray(new CompletableFuture[0]));
+			try {
+				allOf.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+			List<NodeSingleExecutionStatistics> executionStatistics = executionStatisticsFuture.stream().map(future ->{
+				try{
+					return future.get();
+				} catch (ExecutionException | InterruptedException e) {
+					return null;
+				}
+			}).filter(Objects::nonNull).collect(Collectors.toList());
+
 			return new NodeBundleExecutionStatistics(executionStatistics, request);
 
 		}catch (Exception e) {
@@ -68,21 +95,23 @@ public class RequestExecutor {
 		return null;
 	}
 
-	private HttpRequest prepreRequest(RequestInfo requestInfo) throws URISyntaxException {
+	private HttpRequest prepareRequest(RequestInfo requestInfo) throws URISyntaxException {
 		HttpRequest.BodyPublisher bodyPublisher = requestInfo.body() != null ? HttpRequest.BodyPublishers.ofString(requestInfo.body()) : HttpRequest.BodyPublishers.noBody();
 		//TODO dodac headers
 		return HttpRequest.newBuilder()
 				.uri(new URI(requestInfo.uri()))
 				.method(requestInfo.method().name(), bodyPublisher)
+				.timeout(Duration.ofMillis(requestInfo.timeout()))
 				.build();
 	}
 
-	private NodeSingleExecutionStatistics handleRequest(HttpRequest request) throws IOException, InterruptedException {
-		long start = System.currentTimeMillis();
-		HttpResponse response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		long end = System.currentTimeMillis();
-		long elapsedTime = end - start;
-		return new NodeSingleExecutionStatistics(elapsedTime,response.statusCode());
+	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request) {
+		Instant start =Instant.now();
+		return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
+			Instant end = Instant.now();
+			Long elapsedTime = Duration.between(start,end).toMillis();
+			return new NodeSingleExecutionStatistics(elapsedTime,response.statusCode()) ;
+		});
 	}
 
 }

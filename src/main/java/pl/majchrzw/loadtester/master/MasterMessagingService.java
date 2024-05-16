@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.NodeStatusChange;
+import pl.majchrzw.loadtester.dto.Status;
 
 @Component
 @Profile("master")
@@ -30,28 +31,29 @@ public class MasterMessagingService {
 		template.setPubSubDomain(true);
 	}
 	
-	public void transmitConfiguration(NodeRequestConfig config) {
-		template.convertAndSend(configurationTopic, config);
+	public void transmitConfiguration() {
+		template.convertAndSend(configurationTopic, dao.getNodeRequestConfig());
 		logger.info("Transmitted configuration");
 	}
 	
 	@JmsListener(destination = readinessTopic)
 	public void receiveReadiness(NodeStatusChange msg) {
+		// TODO - do zmiany
 		switch (msg.action()) {
 			case START -> {
-				dao.registerNewNode(msg.id());
+				dao.registerNewNode(msg.id(), Status.NEW);
 				logger.info("Node: " + msg.id() + " has confirmed readiness, ready nodes count: " + dao.numberOfReadyNodes());
 			}
 			case SENDING_REQUESTS -> {
-				dao.setNodeStatusAsSendingRequests(msg.id());
+				dao.registerNewNode(msg.id(), Status.SENDING_REQUESTS);
 				logger.info("Node: " + msg.id() + " has started sending requests.");
 			}
 			case FINISHED_JOB -> {
-				dao.setNodeStatusAsFinishedSending(msg.id());
+				dao.registerNewNode(msg.id(), Status.FINISHED_SENDING);
 				logger.info("Node: " + msg.id() + " has finished sending requests.");
 			}
 			case STOP -> {
-				dao.deleteNodeFromList(msg.id());
+				dao.registerNewNode(msg.id(), Status.CLOSED);
 				logger.info("Node: " + msg.id() + " has closed, ready nodes count: " + dao.numberOfReadyNodes());
 			}
 		}

@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import pl.majchrzw.loadtester.dto.MasterRequestConfig;
+import pl.majchrzw.loadtester.dto.InitialConfiguration;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.RequestInfo;
 import pl.majchrzw.loadtester.shared.RequestExecutor;
@@ -33,36 +33,13 @@ public class MasterService implements ServiceWorker {
 	
 	@Override
 	public void run() {
-		ObjectMapper objectMapper = new ObjectMapper();
-		ClassPathResource requestsResource = new ClassPathResource("requests.json");
-		MasterRequestConfig requestConfig;
-		try {
-			requestConfig = objectMapper.readValue(requestsResource.getFile(), MasterRequestConfig.class);
-		} catch (Exception e) {
-			// jak źle wczyta config to po prostu się zamyka
-			logger.warn(e.getMessage());
-			return;
-		}
+		readInitialConfiguration();
 		
-		final int nodes = requestConfig.nodes() + 1;
-		List<RequestInfo> masterRequestsList = new ArrayList<>();
-		List<RequestInfo> nodeRequestsList = new ArrayList<>();
-		for (RequestInfo requestInfo : requestConfig.requests()) {
-			// prepare headers
-			MultiValueMap requestHeaders = new MultiValueMap();
-			requestHeaders.putAll(requestConfig.defaultHeaders());
-			requestHeaders.putAll(requestInfo.headers());
-			// prepare amount
-			int baseAmount = requestInfo.count() / nodes;
-			int remainder = requestInfo.count() % nodes;
-			
-			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), requestInfo.timeout(),baseAmount + remainder));
-			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(),requestInfo.timeout(), baseAmount));
-		}
-		dao.setRequestConfig(new NodeRequestConfig(masterRequestsList));
+		prepareNodesConfiguration();
+		prepareMasterConfiguration();
 		
 		try {
-			while ( dao.numberOfReadyNodes() < requestConfig.nodes()){
+			while ( dao.numberOfReadyNodes() < dao.getInitialConfiguration().nodes()){
 				Thread.sleep(500);
 			}
 		} catch (InterruptedException e) {
@@ -70,7 +47,9 @@ public class MasterService implements ServiceWorker {
 		}
 		
 		logger.info("All nodes are ready, sending configuration");
-		messagingService.transmitConfiguration(new NodeRequestConfig(nodeRequestsList));
+		messagingService.transmitConfiguration();
+		
+		executor.run();
 
 		processStatistics();
 	}
@@ -78,6 +57,49 @@ public class MasterService implements ServiceWorker {
 	private void processStatistics(){
 		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
 		dao.getAllExecutionStatistics().forEach( (uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
+	}
+	
+	private void readInitialConfiguration(){
+		ObjectMapper objectMapper = new ObjectMapper();
+		ClassPathResource requestsResource = new ClassPathResource("requests.json");
+		InitialConfiguration initialConfiguration;
+		try {
+			initialConfiguration = objectMapper.readValue(requestsResource.getFile(), InitialConfiguration.class);
+			dao.setInitialConfiguration(initialConfiguration);
+		} catch (Exception e) {
+			// jak źle wczyta config to po prostu się zamyka
+			logger.warn(e.getMessage());
+			return;
+		}
+	}
+	
+	private void prepareNodesConfiguration(){
+		InitialConfiguration configuration = dao.getInitialConfiguration();
+		var nodeRequestConfig = new NodeRequestConfig(configuration.requests().stream().map(request -> {
+			MultiValueMap requestHeaders = new MultiValueMap();
+			requestHeaders.putAll(configuration.defaultHeaders());
+			requestHeaders.putAll(request.headers());
+			
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(),request.timeout(), request.count() / configuration.nodes() + 1);
+		}).toList());
+		dao.setNodeRequestConfig(nodeRequestConfig);
+	}
+	
+	private void prepareMasterConfiguration(){
+		InitialConfiguration configuration = dao.getInitialConfiguration();
+		int nodes = configuration.nodes() + 1; // all nodes (plus master)
+		
+		var masterRequestConfig = new NodeRequestConfig(configuration.requests().stream().map(request -> {
+			MultiValueMap requestHeaders = new MultiValueMap();
+			requestHeaders.putAll(configuration.defaultHeaders());
+			requestHeaders.putAll(request.headers());
+			
+			int base = request.count() / nodes;
+			int remainder = request.count() % nodes;
+			
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(),request.timeout(), base + remainder);
+		}).toList());
+		dao.setNodeRequestConfig(masterRequestConfig);
 	}
 	
 }

@@ -8,7 +8,6 @@ import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeSingleExecutionStatistics;
 import pl.majchrzw.loadtester.dto.RequestInfo;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;

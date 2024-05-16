@@ -2,6 +2,7 @@ package pl.majchrzw.loadtester.master;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import pl.majchrzw.loadtester.dto.InitialConfiguration;
 import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.Status;
@@ -16,8 +17,12 @@ public class MasterDao implements DataRepository {
 	
 	private final HashMap<UUID, Status> nodeStatus;
 	
-	private NodeRequestConfig requestConfig;
+	private NodeRequestConfig nodeRequestConfig;
 	
+	
+	
+	private InitialConfiguration initialConfiguration;
+	private NodeRequestConfig masterRequestConfig;
 	private final UUID masterId;
 	
 	private HashMap<UUID, NodeExecutionStatistics> executionStatistics;
@@ -28,20 +33,8 @@ public class MasterDao implements DataRepository {
 		executionStatistics = new HashMap<>();
 	}
 	
-	public void registerNewNode(UUID nodeId) {
-		nodeStatus.put(nodeId, Status.NEW);
-	}
-	
-	public void deleteNodeFromList(UUID nodeId) {
-		nodeStatus.put(nodeId, Status.CLOSED);
-	}
-	
-	public void setNodeStatusAsSendingRequests(UUID nodeId) {
-		nodeStatus.put(nodeId, Status.SENDING_REQUESTS);
-	}
-	
-	public void setNodeStatusAsFinishedSending(UUID nodeId) {
-		nodeStatus.put(nodeId, Status.FINISHED_SENDING);
+	public void registerNewNode(UUID nodeId, Status status) {
+		nodeStatus.put(nodeId, status);
 	}
 	
 	public void addNodeExecutionStatistics(NodeExecutionStatistics statistics) {
@@ -61,8 +54,13 @@ public class MasterDao implements DataRepository {
 		return masterId;
 	}
 	
+	@Override
 	public NodeRequestConfig getRequestConfig() {
-		return requestConfig;
+		return masterRequestConfig;
+	}
+	
+	public NodeRequestConfig getNodeRequestConfig(){
+		return nodeRequestConfig;
 	}
 	
 	@Override
@@ -75,8 +73,16 @@ public class MasterDao implements DataRepository {
 		executionStatistics.put(masterId, statistics);
 	}
 	
-	public void setRequestConfig(NodeRequestConfig requestConfig) {
-		this.requestConfig = requestConfig;
+	public void setNodeRequestConfig(NodeRequestConfig nodeRequestConfig) {
+		this.nodeRequestConfig = nodeRequestConfig;
+	}
+	
+	public InitialConfiguration getInitialConfiguration() {
+		return initialConfiguration;
+	}
+	
+	public void setInitialConfiguration(InitialConfiguration initialConfiguration) {
+		this.initialConfiguration = initialConfiguration;
 	}
 	
 }

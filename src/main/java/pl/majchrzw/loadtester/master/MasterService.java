@@ -48,8 +48,15 @@ public class MasterService implements ServiceWorker {
 		
 		logger.info("All nodes are ready, sending configuration");
 		messagingService.transmitConfiguration();
-		
 		executor.run();
+		
+		try {
+			while ( dao.numberOfFinishedNodes() < dao.getInitialConfiguration().nodes()){
+				Thread.sleep(500);
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 
 		processStatistics();
 	}
@@ -69,7 +76,6 @@ public class MasterService implements ServiceWorker {
 		} catch (Exception e) {
 			// jak źle wczyta config to po prostu się zamyka
 			logger.warn(e.getMessage());
-			return;
 		}
 	}
 	
@@ -99,7 +105,7 @@ public class MasterService implements ServiceWorker {
 			
 			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(),request.timeout(), base + remainder);
 		}).toList());
-		dao.setNodeRequestConfig(masterRequestConfig);
+		dao.setRequestConfig(masterRequestConfig);
 	}
 	
 }

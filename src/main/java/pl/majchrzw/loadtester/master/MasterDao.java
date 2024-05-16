@@ -46,7 +46,17 @@ public class MasterDao implements DataRepository {
 	}
 	
 	public int numberOfReadyNodes() {
-		return nodeStatus.size();
+		return (int) nodeStatus.values()
+				.stream()
+				.filter(status -> status.equals(Status.NEW))
+				.count();
+	}
+	
+	public int numberOfFinishedNodes() {
+		return (int) nodeStatus.values()
+				.stream()
+				.filter(status -> status.equals(Status.CLOSED))
+				.count();
 	}
 	
 	@Override
@@ -57,6 +67,10 @@ public class MasterDao implements DataRepository {
 	@Override
 	public NodeRequestConfig getRequestConfig() {
 		return masterRequestConfig;
+	}
+	
+	public void setRequestConfig(NodeRequestConfig requestConfig){
+		this.masterRequestConfig = requestConfig;
 	}
 	
 	public NodeRequestConfig getNodeRequestConfig(){

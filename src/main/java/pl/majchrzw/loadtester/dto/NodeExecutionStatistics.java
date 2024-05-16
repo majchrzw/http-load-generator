@@ -1,9 +1,10 @@
 package pl.majchrzw.loadtester.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public record NodeExecutionStatistics (
-		UUID nodeId
-		// TODO - tutaj będzie reszta statystyk dotyczących wysłanych request-ów przez jakiś node
+		UUID nodeId,
+		List<NodeBundleExecutionStatistics> bundleExecutionStatistics
 ){
 }

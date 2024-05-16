@@ -56,8 +56,8 @@ public class MasterService implements ServiceWorker {
 			int baseAmount = requestInfo.count() / nodes;
 			int remainder = requestInfo.count() % nodes;
 			
-			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount + remainder));
-			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), baseAmount));
+			masterRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(), requestInfo.timeout(),baseAmount + remainder));
+			nodeRequestsList.add(new RequestInfo(requestInfo.method(), requestInfo.uri(), requestHeaders, requestInfo.body(), requestInfo.name(),requestInfo.timeout(), baseAmount));
 		}
 		dao.setRequestConfig(new NodeRequestConfig(masterRequestsList));
 		

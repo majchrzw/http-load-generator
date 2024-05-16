@@ -2,30 +2,18 @@
   "requests": [
     {
       "name": "getTest",
-      "uri": "http://localhost:8080/api/test",
+      "uri": "http://localhost:8080",
       "method": "GET",
       "headers": {
         "Accept": "application/json",
         "Authorization": "Token",
         "Vary": "Value"
       },
+      "timeout": 5000,
       "count": 100
-    },
-    {
-      "name": "getTest",
-      "uri": "http://localhost:8080/api/second",
-      "method": "POST",
-      "headers": {
-        "Accept": "application/json",
-        "Authorization": "Token",
-        "Vary": "Value",
-        "Set Cookie": "A new cookie"
-      },
-      "body": "request body",
-      "count": 88
     }
   ],
-  "nodes": 2,
+  "nodes": 0,
   "defaultHeaders": {
     "Default header": "Default Value",
     "Vary": "Another one"

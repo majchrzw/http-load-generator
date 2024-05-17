@@ -2,8 +2,8 @@ package pl.majchrzw.loadtester.node;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.Status;
 import pl.majchrzw.loadtester.shared.DataRepository;
 

@@ -1,4 +1,4 @@
-package pl.majchrzw.loadtester.dto;
+package pl.majchrzw.loadtester.dto.config;
 
 import org.apache.commons.collections.map.MultiValueMap;
 

@@ -1,4 +1,4 @@
-package pl.majchrzw.loadtester.dto;
+package pl.majchrzw.loadtester.dto.statistics;
 
 import java.util.List;
 import java.util.UUID;

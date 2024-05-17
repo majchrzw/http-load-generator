@@ -1,4 +1,4 @@
-package pl.majchrzw.loadtester.dto;
+package pl.majchrzw.loadtester.dto.config;
 
 import java.util.List;
 

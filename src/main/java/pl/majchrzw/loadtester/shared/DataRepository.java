@@ -1,7 +1,7 @@
 package pl.majchrzw.loadtester.shared;
 
-import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 
 import java.util.UUID;
 

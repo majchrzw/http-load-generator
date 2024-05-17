@@ -3,10 +3,10 @@ package pl.majchrzw.loadtester.shared;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.NodeBundleExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeSingleExecutionStatistics;
-import pl.majchrzw.loadtester.dto.RequestInfo;
+import pl.majchrzw.loadtester.dto.statistics.NodeBundleExecutionStatistics;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
+import pl.majchrzw.loadtester.dto.statistics.NodeSingleExecutionStatistics;
+import pl.majchrzw.loadtester.dto.config.RequestInfo;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 public class RequestExecutor {
 	
 	private final ExecutorService executorService;
-
+	
 	private HttpClient httpClient;
-
+	
 	private final DataRepository dao;
 	
 	private final Logger logger = LoggerFactory.getLogger(RequestExecutor.class);
@@ -40,30 +40,33 @@ public class RequestExecutor {
 	public void run() {
 		logger.info("Running http requests load");
 		List<NodeBundleExecutionStatistics> bundleExecutionStatistics = new ArrayList<>(dao.getRequestConfig().requests().size());
-		if(httpClient == null)
+		if (httpClient == null)
 			httpClient = HttpClient.newBuilder()
 					.executor(executorService)
 					.build();
-
-		for(RequestInfo request:dao.getRequestConfig().requests()){
-			NodeBundleExecutionStatistics bundle =this.executeRequestsBundle(request);
+		
+		for (RequestInfo request : dao.getRequestConfig().requests()) {
+			NodeBundleExecutionStatistics bundle = this.executeRequestsBundle(request);
 			bundleExecutionStatistics.add(bundle);
 		}
-		NodeExecutionStatistics statistics = new NodeExecutionStatistics(dao.getId(),bundleExecutionStatistics);
+		NodeExecutionStatistics statistics = new NodeExecutionStatistics(dao.getId(), bundleExecutionStatistics);
 		dao.setExecutionStatistics(statistics);
 	}
-
+	
 	private NodeBundleExecutionStatistics executeRequestsBundle(RequestInfo request) {
-		try{
-			Integer delayOfRequests=100;
+		// TODO - trzeba dodać obsługę timeout-ów, bo teraz nie ma tego w ogóle
+		// TODO - request-y różnych typów powinny być chyba wysyłanie jednocześnie a nie sekwencyjnie
+		try {
+			Integer delayOfRequests = 10; // TODO - to będzie zmienna potem
 			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 			List<CompletableFuture<NodeSingleExecutionStatistics>> executionStatisticsFuture = new ArrayList<>(request.count());
 			HttpRequest httpRequest = this.prepareRequest(request);
-			for(int i=0; i<request.count();i++){
-				scheduler.schedule(()->{
-					CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture= handleAsyncRequest(httpRequest);
+			for (int i = 0; i < request.count(); i++) {
+				int finalI = i;
+				scheduler.schedule(() -> {
+					CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture = handleAsyncRequest(httpRequest, finalI);
 					executionStatisticsFuture.add(nodeSingleExecutionStatisticsCompletableFuture);
-				},i*delayOfRequests, TimeUnit.MICROSECONDS);
+				}, i * delayOfRequests, TimeUnit.MILLISECONDS);
 			}
 			scheduler.shutdown();
 			try {
@@ -77,23 +80,23 @@ public class RequestExecutor {
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
-			List<NodeSingleExecutionStatistics> executionStatistics = executionStatisticsFuture.stream().map(future ->{
-				try{
+			List<NodeSingleExecutionStatistics> executionStatistics = executionStatisticsFuture.stream().map(future -> {
+				try {
 					return future.get();
 				} catch (ExecutionException | InterruptedException e) {
 					return null;
 				}
 			}).filter(Objects::nonNull).collect(Collectors.toList());
-
+			
 			return new NodeBundleExecutionStatistics(executionStatistics, request);
-
-		}catch (Exception e) {
+			
+		} catch (Exception e) {
 			//TODO dodac lepsza obsluge bledow
 			logger.error("Error while executing request: " + request.name(), e);
 		}
 		return null;
 	}
-
+	
 	private HttpRequest prepareRequest(RequestInfo requestInfo) throws URISyntaxException {
 		HttpRequest.BodyPublisher bodyPublisher = requestInfo.body() != null ? HttpRequest.BodyPublishers.ofString(requestInfo.body()) : HttpRequest.BodyPublishers.noBody();
 		//TODO dodac headers
@@ -103,14 +106,15 @@ public class RequestExecutor {
 				.timeout(Duration.ofMillis(requestInfo.timeout()))
 				.build();
 	}
-
-	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request) {
-		Instant start =Instant.now();
+	
+	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request, int i) {
+		Instant start = Instant.now();
 		return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
+			System.out.println("Sending request: " + request);
 			Instant end = Instant.now();
-			Long elapsedTime = Duration.between(start,end).toMillis();
-			return new NodeSingleExecutionStatistics(elapsedTime,response.statusCode()) ;
+			Long elapsedTime = Duration.between(start, end).toMillis();
+			return new NodeSingleExecutionStatistics(i, elapsedTime, response.statusCode());
 		});
 	}
-
+	
 }

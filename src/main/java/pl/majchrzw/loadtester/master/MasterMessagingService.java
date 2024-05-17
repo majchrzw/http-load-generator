@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeStatusChange;
 import pl.majchrzw.loadtester.dto.Status;
 

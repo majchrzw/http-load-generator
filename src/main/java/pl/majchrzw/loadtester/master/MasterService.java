@@ -7,14 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import pl.majchrzw.loadtester.dto.InitialConfiguration;
-import pl.majchrzw.loadtester.dto.NodeRequestConfig;
-import pl.majchrzw.loadtester.dto.RequestInfo;
+import pl.majchrzw.loadtester.dto.config.InitialConfiguration;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.config.RequestInfo;
 import pl.majchrzw.loadtester.shared.RequestExecutor;
 import pl.majchrzw.loadtester.shared.ServiceWorker;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Profile("master")
@@ -23,12 +20,14 @@ public class MasterService implements ServiceWorker {
 	private final MasterMessagingService messagingService;
 	private final MasterDao dao;
 	
-	private RequestExecutor executor;
+	private final RequestExecutor executor;
+	private final StatisticsCalculator statisticsCalculator;
 	
-	public MasterService(MasterMessagingService messagingService, MasterDao dao, RequestExecutor executor) {
+	public MasterService(MasterMessagingService messagingService, MasterDao dao, RequestExecutor executor, StatisticsCalculator statisticsCalculator) {
 		this.messagingService = messagingService;
 		this.dao = dao;
 		this.executor = executor;
+		this.statisticsCalculator = statisticsCalculator;
 	}
 	
 	@Override
@@ -39,7 +38,7 @@ public class MasterService implements ServiceWorker {
 		prepareMasterConfiguration();
 		
 		try {
-			while ( dao.numberOfReadyNodes() < dao.getInitialConfiguration().nodes()){
+			while (dao.numberOfReadyNodes() < dao.getInitialConfiguration().nodes()) {
 				Thread.sleep(500);
 			}
 		} catch (InterruptedException e) {
@@ -51,22 +50,25 @@ public class MasterService implements ServiceWorker {
 		executor.run();
 		
 		try {
-			while ( dao.numberOfFinishedNodes() < dao.getInitialConfiguration().nodes()){
+			while (dao.numberOfFinishedNodes() < dao.getInitialConfiguration().nodes()) {
 				Thread.sleep(500);
 			}
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-
+		
 		processStatistics();
 	}
 	
-	private void processStatistics(){
+	private void processStatistics() {
 		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
-		dao.getAllExecutionStatistics().forEach( (uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
+		// TODO-aktualnie dane z requestów są oddzielne dla każego node-a, trzeba je połączyć z powrotem albo rysować oddzielnie dla każdej maszyny
+		dao.getAllExecutionStatistics().forEach((uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
+		statisticsCalculator.drawAllPlots(dao.getExecutionStatistics());
+		statisticsCalculator.calculateAllStatistics(dao.getExecutionStatistics());
 	}
 	
-	private void readInitialConfiguration(){
+	private void readInitialConfiguration() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ClassPathResource requestsResource = new ClassPathResource("requests.json");
 		InitialConfiguration initialConfiguration;
@@ -79,19 +81,21 @@ public class MasterService implements ServiceWorker {
 		}
 	}
 	
-	private void prepareNodesConfiguration(){
+	private void prepareNodesConfiguration() {
 		InitialConfiguration configuration = dao.getInitialConfiguration();
 		var nodeRequestConfig = new NodeRequestConfig(configuration.requests().stream().map(request -> {
 			MultiValueMap requestHeaders = new MultiValueMap();
 			requestHeaders.putAll(configuration.defaultHeaders());
 			requestHeaders.putAll(request.headers());
 			
-			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(),request.timeout(), request.count() / configuration.nodes() + 1);
+			int count = request.count() / (configuration.nodes() + 1);
+			
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), count);
 		}).toList());
 		dao.setNodeRequestConfig(nodeRequestConfig);
 	}
 	
-	private void prepareMasterConfiguration(){
+	private void prepareMasterConfiguration() {
 		InitialConfiguration configuration = dao.getInitialConfiguration();
 		int nodes = configuration.nodes() + 1; // all nodes (plus master)
 		
@@ -103,7 +107,7 @@ public class MasterService implements ServiceWorker {
 			int base = request.count() / nodes;
 			int remainder = request.count() % nodes;
 			
-			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(),request.timeout(), base + remainder);
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), base + remainder);
 		}).toList());
 		dao.setRequestConfig(masterRequestConfig);
 	}

@@ -2,9 +2,9 @@ package pl.majchrzw.loadtester.master;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.InitialConfiguration;
-import pl.majchrzw.loadtester.dto.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.config.InitialConfiguration;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.Status;
 import pl.majchrzw.loadtester.shared.DataRepository;
 
@@ -25,7 +25,7 @@ public class MasterDao implements DataRepository {
 	private NodeRequestConfig masterRequestConfig;
 	private final UUID masterId;
 	
-	private HashMap<UUID, NodeExecutionStatistics> executionStatistics;
+	private final HashMap<UUID, NodeExecutionStatistics> executionStatistics;
 	
 	public MasterDao() {
 		this.masterId = UUID.randomUUID();

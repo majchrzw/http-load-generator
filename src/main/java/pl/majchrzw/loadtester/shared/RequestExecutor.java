@@ -4,14 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.config.RequestInfo;
 import pl.majchrzw.loadtester.dto.statistics.NodeBundleExecutionStatistics;
 import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.statistics.NodeSingleExecutionStatistics;
-import pl.majchrzw.loadtester.dto.config.RequestInfo;
 import pl.majchrzw.loadtester.dto.statistics.RequestIteratorData;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;

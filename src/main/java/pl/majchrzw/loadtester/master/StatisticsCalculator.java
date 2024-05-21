@@ -12,31 +12,50 @@ import pl.majchrzw.loadtester.dto.statistics.NodeSingleExecutionStatistics;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class StatisticsCalculator {
 	
-	public void drawAllPlots(NodeExecutionStatistics statistics) {
-		statistics.bundleExecutionStatistics().forEach(bundle -> drawOneRequestPlot(bundle, statistics.nodeId()));
+	public void drawResponseTimePlots(NodeExecutionStatistics statistics) {
+		statistics.bundleExecutionStatistics().forEach(bundle -> drawResponseTimePlot(bundle, statistics.nodeId()));
 	}
 	
 	// rysuje wykres czasu odpowiedzi na zapytania z jednego node-a i jednego request-a
-	private void drawOneRequestPlot(NodeBundleExecutionStatistics nodeBundleExecutionStatistics, UUID nodeid) {
+	private void drawResponseTimePlot(NodeBundleExecutionStatistics nodeBundleExecutionStatistics, UUID nodeid) {
 		int requestCount = nodeBundleExecutionStatistics.executionStatistics().size();
 		String requestName = nodeBundleExecutionStatistics.requestInfo().name();
+		long startTime = nodeBundleExecutionStatistics
+				.executionStatistics()
+				.stream()
+				.min(Comparator.comparing(NodeSingleExecutionStatistics::startTime))
+				.orElseThrow(() -> new IllegalStateException("No statistics to draw a plot"))
+				.startTime()
+				.toEpochMilli();
+		
+		List<PlotValue> values = nodeBundleExecutionStatistics.executionStatistics()
+				.stream()
+				.sorted(Comparator.comparing(NodeSingleExecutionStatistics::startTime))
+				.map(t -> {
+					double x = (t.startTime().toEpochMilli() - startTime) / 1000d;
+					double y = t.elapsedTime();
+					return new PlotValue(x,y);
+				}).toList();
 		
 		double[] xData = new double[requestCount];
 		double[] yData = new double[requestCount];
 		
-		nodeBundleExecutionStatistics.executionStatistics().forEach(executionStatistics -> {
-			xData[executionStatistics.id()] = executionStatistics.id();
-			yData[executionStatistics.id()] = executionStatistics.elapsedTime();
+		AtomicInteger i = new AtomicInteger(-1);
+		values.forEach( val -> {
+			final int k = i.incrementAndGet();
+			xData[k] = val.x();
+			yData[k] = val.y();
 		});
 		
-		XYChart chart = QuickChart.getChart(requestName, "Zapytanie " + requestName, "Czas odpowiedzi [ms]", "y(x)", xData, yData);
+		XYChart chart = QuickChart.getChart(requestName, "Czas od startu wykonywania", "Czas odpowiedzi [ms]", "", xData, yData);
 		
 		try {
 			BitmapEncoder.saveBitmap(chart, "./statistics/chart-" + requestName + "-" + nodeid, BitmapEncoder.BitmapFormat.PNG);
@@ -45,15 +64,12 @@ public class StatisticsCalculator {
 		}
 	}
 	
-	public void calculateAllStatistics(NodeExecutionStatistics statistics) {
+	public void calculateStatistics(NodeExecutionStatistics statistics) {
 		List<NodeRequestStatistics> nodeStatistics = statistics.bundleExecutionStatistics().stream().map(t -> calculateOneRequestStatistics(t, statistics.nodeId())).toList();
 		
 		ObjectMapper objectMapper = new ObjectMapper();
 		try{
 			File dataFile = new File("./statistics/data-" + statistics.nodeId() + ".json");
-			if (!dataFile.exists()){
-				dataFile.createNewFile();
-			}
 			objectMapper.writeValue( dataFile, nodeStatistics);
 		} catch (Exception e){
 			System.out.println(e.getMessage());
@@ -85,11 +101,13 @@ public class StatisticsCalculator {
 				minimumRequestTime,
 				maximalRequestTime,
 				requestCount,
-				100,
+				100, // TODO - to ma być obliczane finalnie
 				nodeBundleExecutionStatistics.requestInfo().timeout(),
 				nodeId,
 				nodeBundleExecutionStatistics.requestInfo().name()
 		);
 	}
+	
+	private record PlotValue( double x, double y){}
 	
 }

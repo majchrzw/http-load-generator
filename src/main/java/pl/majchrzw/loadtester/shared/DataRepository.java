@@ -8,7 +8,7 @@ import java.util.UUID;
 public interface DataRepository {
 	UUID getId();
 	NodeRequestConfig getRequestConfig();
-	NodeExecutionStatistics getExecutionStatistics();
+	NodeExecutionStatistics getNodeExecutionStatistics();
 	// sets application's own execution statistics
-	void setExecutionStatistics(NodeExecutionStatistics statistics);
+	void setNodeExecutionStatistics(NodeExecutionStatistics statistics);
 }

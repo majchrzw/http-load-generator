@@ -2,10 +2,9 @@ package pl.majchrzw.loadtester.master;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.config.InitialConfiguration;
-import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.Status;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.shared.DataRepository;
 
 import java.util.HashMap;
@@ -16,13 +15,7 @@ import java.util.UUID;
 public class MasterDao implements DataRepository {
 	
 	private final HashMap<UUID, Status> nodeStatus;
-	
-	private NodeRequestConfig nodeRequestConfig;
-	
-	
-	
-	private InitialConfiguration initialConfiguration;
-	private NodeRequestConfig masterRequestConfig;
+	private NodeRequestConfig requestConfig;
 	private final UUID masterId;
 	
 	private final HashMap<UUID, NodeExecutionStatistics> executionStatistics;
@@ -33,7 +26,7 @@ public class MasterDao implements DataRepository {
 		executionStatistics = new HashMap<>();
 	}
 	
-	public void registerNewNode(UUID nodeId, Status status) {
+	public void setNodeStatus(UUID nodeId, Status status) {
 		nodeStatus.put(nodeId, status);
 	}
 	
@@ -66,37 +59,20 @@ public class MasterDao implements DataRepository {
 	
 	@Override
 	public NodeRequestConfig getRequestConfig() {
-		return masterRequestConfig;
+		return requestConfig;
 	}
 	
 	public void setRequestConfig(NodeRequestConfig requestConfig){
-		this.masterRequestConfig = requestConfig;
-	}
-	
-	public NodeRequestConfig getNodeRequestConfig(){
-		return nodeRequestConfig;
+		this.requestConfig = requestConfig;
 	}
 	
 	@Override
-	public NodeExecutionStatistics getExecutionStatistics() {
+	public NodeExecutionStatistics getNodeExecutionStatistics() {
 		return executionStatistics.get(masterId);
 	}
 	
 	@Override
-	public void setExecutionStatistics(NodeExecutionStatistics statistics) {
+	public void setNodeExecutionStatistics(NodeExecutionStatistics statistics) {
 		executionStatistics.put(masterId, statistics);
 	}
-	
-	public void setNodeRequestConfig(NodeRequestConfig nodeRequestConfig) {
-		this.nodeRequestConfig = nodeRequestConfig;
-	}
-	
-	public InitialConfiguration getInitialConfiguration() {
-		return initialConfiguration;
-	}
-	
-	public void setInitialConfiguration(InitialConfiguration initialConfiguration) {
-		this.initialConfiguration = initialConfiguration;
-	}
-	
 }

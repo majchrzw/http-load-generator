@@ -31,20 +31,10 @@ public class NodeService implements ServiceWorker {
 	public void run() {
 		nodeMessagingService.transmitReadiness();
 		while (dao.getCurrentStatus().equals(Status.NEW)) {
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+			Thread.onSpinWait();
 		}
 		executor.run();
 		nodeMessagingService.transmitStatistics();
-		try {
-			// TODO - to jest chwilowo i pewnie potem wyleci
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
 		logger.info("Finished requests and sent statistics from node: " + dao.getId() + ", closing node.");
 	}
 }

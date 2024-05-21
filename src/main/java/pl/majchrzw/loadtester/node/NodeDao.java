@@ -27,12 +27,8 @@ public class NodeDao implements DataRepository {
 		return currentStatus;
 	}
 	
-	public void setReceivedConfigurationStatus() {
-		if (currentStatus.equals(Status.NEW)) {
-			currentStatus = Status.RECEIVED_CONFIGURATION;
-		} else {
-			throw new IllegalStateException("Tried to again change status to received configuration");
-		}
+	public void setCurrentStatus(Status status) {
+		currentStatus = status;
 	}
 	
 	public void setRequestConfig(NodeRequestConfig config){
@@ -49,12 +45,12 @@ public class NodeDao implements DataRepository {
 	}
 	
 	@Override
-	public NodeExecutionStatistics getExecutionStatistics() {
+	public NodeExecutionStatistics getNodeExecutionStatistics() {
 		return statistics;
 	}
 	
 	@Override
-	public void setExecutionStatistics(NodeExecutionStatistics statistics) {
+	public void setNodeExecutionStatistics(NodeExecutionStatistics statistics) {
 		this.statistics = statistics;
 	}
 	

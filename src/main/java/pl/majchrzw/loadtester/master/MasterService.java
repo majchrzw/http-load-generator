@@ -1,6 +1,7 @@
 package pl.majchrzw.loadtester.master;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,8 @@ import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.config.RequestInfo;
 import pl.majchrzw.loadtester.shared.RequestExecutor;
 import pl.majchrzw.loadtester.shared.ServiceWorker;
+
+import java.io.File;
 
 @Service
 @Profile("master")
@@ -32,29 +35,23 @@ public class MasterService implements ServiceWorker {
 	
 	@Override
 	public void run() {
-		readInitialConfiguration();
+		InitialConfiguration initialConfiguration = readInitialConfiguration();
+		int nodes = initialConfiguration.nodes();
 		
-		prepareNodesConfiguration();
-		prepareMasterConfiguration();
+		NodeRequestConfig nodeRequestConfig = prepareNodesConfiguration(initialConfiguration);
+		prepareMasterConfiguration(initialConfiguration);
 		
-		try {
-			while (dao.numberOfReadyNodes() < dao.getInitialConfiguration().nodes()) {
-				Thread.sleep(500);
-			}
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		
+		while (dao.numberOfReadyNodes() < nodes) {
+			Thread.onSpinWait();
 		}
 		
 		logger.info("All nodes are ready, sending configuration");
-		messagingService.transmitConfiguration();
+		messagingService.transmitConfiguration(nodeRequestConfig);
 		executor.run();
 		
-		try {
-			while (dao.numberOfFinishedNodes() < dao.getInitialConfiguration().nodes()) {
-				Thread.sleep(500);
-			}
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		while (dao.numberOfFinishedNodes() < nodes) {
+			Thread.onSpinWait();
 		}
 		
 		processStatistics();
@@ -64,51 +61,58 @@ public class MasterService implements ServiceWorker {
 		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
 		// TODO-aktualnie dane z requestów są oddzielne dla każego node-a, trzeba je połączyć z powrotem albo rysować oddzielnie dla każdej maszyny
 		dao.getAllExecutionStatistics().forEach((uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
-		statisticsCalculator.drawAllPlots(dao.getExecutionStatistics());
-		statisticsCalculator.calculateAllStatistics(dao.getExecutionStatistics());
+		statisticsCalculator.drawResponseTimePlots(dao.getNodeExecutionStatistics());
+		statisticsCalculator.calculateStatistics(dao.getNodeExecutionStatistics());
 	}
 	
-	private void readInitialConfiguration() {
+	private InitialConfiguration readInitialConfiguration() {
+		// TODO - dodać na pewno walidację danych wejściowych: int większe od zera, enum dobrze ustalony itd..
 		ObjectMapper objectMapper = new ObjectMapper();
-		ClassPathResource requestsResource = new ClassPathResource("requests.json");
-		InitialConfiguration initialConfiguration;
+		objectMapper.registerModule(new Jdk8Module());
+		File file = new File("requests.json");
+		InitialConfiguration configuration = null;
 		try {
-			initialConfiguration = objectMapper.readValue(requestsResource.getFile(), InitialConfiguration.class);
-			dao.setInitialConfiguration(initialConfiguration);
+			if (file.exists()) {
+				configuration = objectMapper.readValue(file, InitialConfiguration.class);
+			} else {
+				ClassPathResource requestsResource = new ClassPathResource("requests.json");
+				configuration = objectMapper.readValue(requestsResource.getFile(), InitialConfiguration.class);
+			}
 		} catch (Exception e) {
-			// jak źle wczyta config to po prostu się zamyka
-			logger.warn(e.getMessage());
+			logger.error("Cannot read configuration from requests.json file");
+			System.exit(-1);
 		}
+		if (configuration.nodes() < 0){
+			throw new IllegalArgumentException("Number of nodes must be 0 or greater");
+		}
+		return null;
 	}
 	
-	private void prepareNodesConfiguration() {
-		InitialConfiguration configuration = dao.getInitialConfiguration();
-		var nodeRequestConfig = new NodeRequestConfig(configuration.requests().stream().map(request -> {
+	private NodeRequestConfig prepareNodesConfiguration(InitialConfiguration initialConfiguration) {
+		return new NodeRequestConfig(initialConfiguration.requests().stream().map(request -> {
 			MultiValueMap requestHeaders = new MultiValueMap();
-			requestHeaders.putAll(configuration.defaultHeaders());
+			requestHeaders.putAll(initialConfiguration.defaultHeaders());
 			requestHeaders.putAll(request.headers());
 			
-			int count = request.count() / (configuration.nodes() + 1);
+			int count = request.count() / (initialConfiguration.nodes() + 1);
 			
 			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), count);
-		}).toList());
-		dao.setNodeRequestConfig(nodeRequestConfig);
+		}).toList(), initialConfiguration.nextRequestDelay().orElse(100L));
 	}
 	
-	private void prepareMasterConfiguration() {
-		InitialConfiguration configuration = dao.getInitialConfiguration();
-		int nodes = configuration.nodes() + 1; // all nodes (plus master)
+	private void prepareMasterConfiguration(InitialConfiguration initialConfiguration) {
+		int nodes = initialConfiguration.nodes() + 1; // all nodes (plus master)
 		
-		var masterRequestConfig = new NodeRequestConfig(configuration.requests().stream().map(request -> {
+		var masterRequestConfig = new NodeRequestConfig(initialConfiguration.requests().stream().map(request -> {
 			MultiValueMap requestHeaders = new MultiValueMap();
-			requestHeaders.putAll(configuration.defaultHeaders());
+			requestHeaders.putAll(initialConfiguration.defaultHeaders());
 			requestHeaders.putAll(request.headers());
 			
 			int base = request.count() / nodes;
 			int remainder = request.count() % nodes;
 			
 			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), base + remainder);
-		}).toList());
+		}).toList(), initialConfiguration.nextRequestDelay().orElse(100L));
 		dao.setRequestConfig(masterRequestConfig);
 	}
 	

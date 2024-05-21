@@ -49,7 +49,7 @@ public class RequestExecutor {
 			bundleExecutionStatistics.add(bundleStatistics);
 		}
 		NodeExecutionStatistics statistics = new NodeExecutionStatistics(dao.getId(), bundleExecutionStatistics);
-		dao.setExecutionStatistics(statistics);
+		dao.setNodeExecutionStatistics(statistics);
 	}
 
 	private Map<RequestInfo,List<NodeSingleExecutionStatistics>> runAllRequests(NodeRequestConfig requestConfig) {
@@ -57,18 +57,17 @@ public class RequestExecutor {
 		for(RequestInfo requestInfo: requestConfig.requests()){
 			requestsStatisticsMapFuture.put(requestInfo, new ArrayList<>(requestInfo.count()));
 		}
-		Long seed = 2137L; //TODO - to trzeba zmienić na coś losowego
-		Long delayInMs = 50L; //TODO - mozna to wyciągnąć do konfiguracji
+		Long seed = Instant.now().getEpochSecond();
 		Iterator<RequestIteratorData> iterator = new RandomRequestIterator(dao.getRequestConfig(),seed);
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		Integer iteration = 0;
+		int iteration = 0;
 		while(iterator.hasNext()){
-			final Integer finalIteration = iteration;
+			final int finalIteration = iteration;
 			RequestIteratorData next = iterator.next();
 			scheduler.schedule(() -> {
 				CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture = handleAsyncRequest(next.request(), finalIteration);
 				requestsStatisticsMapFuture.get(next.requestInfo()).add(nodeSingleExecutionStatisticsCompletableFuture);
-			}, iteration * delayInMs, TimeUnit.MILLISECONDS);
+			}, iteration * requestConfig.nextRequestDelay(), TimeUnit.MILLISECONDS);
 			iteration++;
 		}
 
@@ -76,7 +75,7 @@ public class RequestExecutor {
 		try {
 			scheduler.awaitTermination(2, TimeUnit.HOURS);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.warn(e.getMessage());
 		}
 
 		for (RequestInfo requestInfo : requestConfig.requests()) {
@@ -85,7 +84,7 @@ public class RequestExecutor {
 			try {
 				allOf.get();
 			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
+				logger.warn(e.getMessage());
 			}
 		}
 

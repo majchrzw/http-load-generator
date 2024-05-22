@@ -2,7 +2,7 @@
   "requests": [
     {
       "name": "getTest",
-      "uri": "http://localhost:8080/demo",
+      "uri": "http://localhost:8080",
       "method": "GET",
       "headers": {
         "Accept": "application/json",

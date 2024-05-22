@@ -97,7 +97,7 @@ public class MasterService implements ServiceWorker {
 			
 			int count = request.count() / (initialConfiguration.nodes() + 1);
 			
-			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), count);
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(),request.expectedReturnStatusCode(), count);
 		}).toList(), initialConfiguration.nextRequestDelay().orElse(100L));
 	}
 	
@@ -112,7 +112,7 @@ public class MasterService implements ServiceWorker {
 			int base = request.count() / nodes;
 			int remainder = request.count() % nodes;
 			
-			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(), base + remainder);
+			return new RequestInfo(request.method(), request.uri(), requestHeaders, request.body(), request.name(), request.timeout(),request.expectedReturnStatusCode(), base + remainder);
 		}).toList(), initialConfiguration.nextRequestDelay().orElse(100L));
 		dao.setRequestConfig(masterRequestConfig);
 	}

@@ -8,6 +8,7 @@ import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.shared.DataRepository;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -37,15 +38,17 @@ public class MasterDao implements DataRepository {
 		return executionStatistics;
 	}
 	
-	public synchronized int numberOfReadyNodes() {
-		return (int) nodeStatus.values()
+	public int numberOfReadyNodes() {
+		Map<UUID, Status> statuses = Map.copyOf(nodeStatus);
+		return (int) statuses.values()
 				.stream()
 				.filter(status -> status.equals(Status.NEW))
 				.count();
 	}
 	
 	public synchronized int numberOfFinishedNodes() {
-		return (int) nodeStatus.values()
+		Map<UUID, Status> statuses = Map.copyOf(nodeStatus);
+		return (int) statuses.values()
 				.stream()
 				.filter(status -> status.equals(Status.CLOSED))
 				.count();

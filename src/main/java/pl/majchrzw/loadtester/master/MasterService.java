@@ -35,29 +35,25 @@ public class MasterService implements ServiceWorker {
 	
 	@Override
 	public void run() {
+		// read configuration
 		InitialConfiguration initialConfiguration = readInitialConfiguration();
 		int nodes = initialConfiguration.nodes();
-		
+		// prepare requests
 		NodeRequestConfig nodeRequestConfig = prepareNodesConfiguration(initialConfiguration);
 		prepareMasterConfiguration(initialConfiguration);
-		
-		
+		// wait for all nodes to be ready
 		while (dao.numberOfReadyNodes() < nodes) {
-			try{
-				Thread.sleep(500);
-			} catch (InterruptedException e){
-				throw new RuntimeException(e);
-			}
+			Thread.onSpinWait();
 		}
-		
+		// start execution
 		logger.info("All nodes are ready, sending configuration");
 		messagingService.transmitConfiguration(nodeRequestConfig);
 		executor.run();
-		
+		// wait for all nodes to finish
 		while (dao.numberOfFinishedNodes() < nodes) {
 			Thread.onSpinWait();
 		}
-		
+		// generate statistics of run
 		processStatistics();
 	}
 	

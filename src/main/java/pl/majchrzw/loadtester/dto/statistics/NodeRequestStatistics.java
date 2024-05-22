@@ -9,7 +9,6 @@ public record NodeRequestStatistics(
 		long requestCount,
 		double successRate,
 		long requestTimeout,
-		UUID nodeId,
 		String requestName
 ) {
 }

@@ -62,7 +62,7 @@ public class RequestExecutor {
 			final int finalIteration = iteration;
 			RequestIteratorData next = iterator.next();
 			scheduler.schedule(() -> {
-				CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture = handleAsyncRequest(next.request(), finalIteration);
+				CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture = handleAsyncRequest(next.request(), finalIteration, next.requestInfo().expectedReturnStatusCode());
 				requestsStatisticsMapFuture.get(next.requestInfo()).add(nodeSingleExecutionStatisticsCompletableFuture);
 			}, iteration * requestConfig.nextRequestDelay(), TimeUnit.MILLISECONDS);
 			iteration++;
@@ -101,13 +101,18 @@ public class RequestExecutor {
 		
 	}
 	
-	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request, int i) {
+	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request, int i, int expectedStatusCode) {
 		Instant start = Instant.now();
 		return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
 			// System.out.println("Sending request: " + request); // TODO - usunąć to na koniec
 			Instant end = Instant.now();
-			Long elapsedTime = Duration.between(start, end).toMillis();
-			return new NodeSingleExecutionStatistics(i, elapsedTime, response.statusCode(), start);
+			long elapsedTime = Duration.between(start, end).toMillis();
+			boolean success = response.statusCode() == expectedStatusCode;
+			return new NodeSingleExecutionStatistics(i, elapsedTime, response.statusCode(), start, success);
+		}).exceptionally( exception -> {
+			Instant end = Instant.now();
+			long elapsedTime = Duration.between(start, end).toMillis();
+			return new NodeSingleExecutionStatistics(i, elapsedTime, -1, start, false);
 		});
 	}
 	

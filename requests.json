@@ -1,0 +1,36 @@
+{
+  "requests": [
+    {
+      "name": "getTest",
+      "uri": "http://localhost:8080/demo",
+      "method": "GET",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Token",
+        "Vary": "Value"
+      },
+      "timeout": 2000,
+      "expectedReturnStatusCode": 200,
+      "count": 74
+    },
+    {
+      "name": "getHello",
+      "uri": "http://localhost:8080/hello",
+      "method": "GET",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Token",
+        "Vary": "HEHEHE"
+      },
+      "timeout": 1008,
+      "expectedReturnStatusCode": 200,
+      "count": 48
+    }
+  ],
+  "nodes": 0,
+  "nextRequestDelay": 50,
+  "defaultHeaders": {
+    "Default-header": "Default Value",
+    "Vary": "Another one"
+  }
+}

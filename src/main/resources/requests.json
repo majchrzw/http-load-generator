@@ -13,18 +13,6 @@
       "nextRequestDelay": 100,
       "count": 100
     },
-    {
-      "name": "getHello",
-      "uri": "http://localhost:8080/hello",
-      "method": "GET",
-      "headers": {
-        "Accept": "application/json",
-        "Authorization": "Token",
-        "Vary": "HEHEHE"
-      },
-      "timeout": 5000,
-      "count": 78
-    }
   ],
 
   "nodes": 0,

@@ -2,9 +2,9 @@ package pl.majchrzw.loadtester.node;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
-import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.Status;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.shared.DataRepository;
 
 import java.util.UUID;
@@ -13,8 +13,8 @@ import java.util.UUID;
 @Profile("node")
 public class NodeDao implements DataRepository {
 	
-	private Status currentStatus;
 	private final UUID nodeId;
+	private Status currentStatus;
 	private NodeRequestConfig requestConfig;
 	
 	private NodeExecutionStatistics statistics;
@@ -23,6 +23,7 @@ public class NodeDao implements DataRepository {
 		this.currentStatus = Status.NEW;
 		this.nodeId = UUID.randomUUID();
 	}
+	
 	public Status getCurrentStatus() {
 		return currentStatus;
 	}
@@ -31,17 +32,17 @@ public class NodeDao implements DataRepository {
 		currentStatus = status;
 	}
 	
-	public void setRequestConfig(NodeRequestConfig config){
-		requestConfig = config;
-	}
-	
 	@Override
 	public UUID getId() {
 		return nodeId;
 	}
 	
-	public NodeRequestConfig getRequestConfig(){
+	public NodeRequestConfig getRequestConfig() {
 		return requestConfig;
+	}
+	
+	public void setRequestConfig(NodeRequestConfig config) {
+		requestConfig = config;
 	}
 	
 	@Override

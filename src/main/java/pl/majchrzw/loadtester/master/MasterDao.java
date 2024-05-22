@@ -15,10 +15,9 @@ import java.util.UUID;
 public class MasterDao implements DataRepository {
 	
 	private final HashMap<UUID, Status> nodeStatus;
-	private NodeRequestConfig requestConfig;
 	private final UUID masterId;
-	
 	private final HashMap<UUID, NodeExecutionStatistics> executionStatistics;
+	private NodeRequestConfig requestConfig;
 	
 	public MasterDao() {
 		this.masterId = UUID.randomUUID();
@@ -38,14 +37,14 @@ public class MasterDao implements DataRepository {
 		return executionStatistics;
 	}
 	
-	public int numberOfReadyNodes() {
+	public synchronized int numberOfReadyNodes() {
 		return (int) nodeStatus.values()
 				.stream()
 				.filter(status -> status.equals(Status.NEW))
 				.count();
 	}
 	
-	public int numberOfFinishedNodes() {
+	public synchronized int numberOfFinishedNodes() {
 		return (int) nodeStatus.values()
 				.stream()
 				.filter(status -> status.equals(Status.CLOSED))
@@ -62,7 +61,7 @@ public class MasterDao implements DataRepository {
 		return requestConfig;
 	}
 	
-	public void setRequestConfig(NodeRequestConfig requestConfig){
+	public void setRequestConfig(NodeRequestConfig requestConfig) {
 		this.requestConfig = requestConfig;
 	}
 	

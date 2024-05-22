@@ -8,9 +8,9 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 import pl.majchrzw.loadtester.dto.Action;
+import pl.majchrzw.loadtester.dto.NodeStatusChange;
 import pl.majchrzw.loadtester.dto.Status;
 import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
-import pl.majchrzw.loadtester.dto.NodeStatusChange;
 
 
 @Component

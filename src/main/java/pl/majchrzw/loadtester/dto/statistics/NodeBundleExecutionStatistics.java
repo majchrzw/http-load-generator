@@ -5,7 +5,7 @@ import pl.majchrzw.loadtester.dto.config.RequestInfo;
 import java.util.List;
 
 public record NodeBundleExecutionStatistics(
-        List<NodeSingleExecutionStatistics> executionStatistics,
-        RequestInfo requestInfo
+		List<NodeSingleExecutionStatistics> executionStatistics,
+		RequestInfo requestInfo
 ) {
 }

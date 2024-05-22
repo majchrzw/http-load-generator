@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
-import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
-import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.dto.NodeStatusChange;
 import pl.majchrzw.loadtester.dto.Status;
+import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 
 @Component
 @Profile("master")
@@ -53,7 +53,7 @@ public class MasterMessagingService {
 	}
 	
 	@JmsListener(destination = statisticsTopic)
-	public void receiveStatistics(NodeExecutionStatistics statistics){
+	public void receiveStatistics(NodeExecutionStatistics statistics) {
 		logger.info("Received execution statistics from node: " + statistics);
 		dao.addNodeExecutionStatistics(statistics);
 	}

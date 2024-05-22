@@ -11,14 +11,14 @@ import pl.majchrzw.loadtester.node.NodeService;
 @SpringBootApplication
 public class LoadTesterApplication implements CommandLineRunner {
 	
-	public static void main(String[] args) {
-		SpringApplication.run(LoadTesterApplication.class, args);
-	}
-	
 	ConfigurableApplicationContext context;
 	
 	public LoadTesterApplication(ConfigurableApplicationContext context) {
 		this.context = context;
+	}
+	
+	public static void main(String[] args) {
+		SpringApplication.run(LoadTesterApplication.class, args);
 	}
 	
 	@Override

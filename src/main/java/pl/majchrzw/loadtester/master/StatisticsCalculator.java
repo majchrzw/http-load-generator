@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StatisticsCalculator {
 	
 	public void drawResponseTimePlots(NodeExecutionStatistics statistics) {
+		File statisticsDir = new File("./statistics");
+		if (!statisticsDir.exists()){
+			statisticsDir.mkdir();
+		}
 		statistics.bundleExecutionStatistics().forEach(bundle -> drawResponseTimePlot(bundle, statistics.nodeId()));
 	}
 	
@@ -42,21 +46,21 @@ public class StatisticsCalculator {
 				.map(t -> {
 					double x = (t.startTime().toEpochMilli() - startTime) / 1000d;
 					double y = t.elapsedTime();
-					return new PlotValue(x,y);
+					return new PlotValue(x, y);
 				}).toList();
 		
 		double[] xData = new double[requestCount];
 		double[] yData = new double[requestCount];
 		
 		AtomicInteger i = new AtomicInteger(-1);
-		values.forEach( val -> {
+		values.forEach(val -> {
 			final int k = i.incrementAndGet();
 			xData[k] = val.x();
 			yData[k] = val.y();
 		});
 		
-		XYChart chart = QuickChart.getChart(requestName, "Czas od startu wykonywania", "Czas odpowiedzi [ms]", "", xData, yData);
-		
+		XYChart chart = QuickChart.getChart(requestName, "Czas od startu wykonywania [s]", "Czas odpowiedzi [ms]", "s", xData, yData);
+		// TODO - dać jakąś nazwę serii
 		try {
 			BitmapEncoder.saveBitmap(chart, "./statistics/chart-" + requestName + "-" + nodeid, BitmapEncoder.BitmapFormat.PNG);
 		} catch (IOException e) {
@@ -68,10 +72,10 @@ public class StatisticsCalculator {
 		List<NodeRequestStatistics> nodeStatistics = statistics.bundleExecutionStatistics().stream().map(t -> calculateOneRequestStatistics(t, statistics.nodeId())).toList();
 		
 		ObjectMapper objectMapper = new ObjectMapper();
-		try{
+		try {
 			File dataFile = new File("./statistics/data-" + statistics.nodeId() + ".json");
-			objectMapper.writeValue( dataFile, nodeStatistics);
-		} catch (Exception e){
+			objectMapper.writeValue(dataFile, nodeStatistics);
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}
@@ -108,6 +112,7 @@ public class StatisticsCalculator {
 		);
 	}
 	
-	private record PlotValue( double x, double y){}
+	private record PlotValue(double x, double y) {
+	}
 	
 }

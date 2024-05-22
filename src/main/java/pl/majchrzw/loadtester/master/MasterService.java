@@ -43,7 +43,11 @@ public class MasterService implements ServiceWorker {
 		
 		
 		while (dao.numberOfReadyNodes() < nodes) {
-			Thread.onSpinWait();
+			try{
+				Thread.sleep(500);
+			} catch (InterruptedException e){
+				throw new RuntimeException(e);
+			}
 		}
 		
 		logger.info("All nodes are ready, sending configuration");
@@ -82,10 +86,10 @@ public class MasterService implements ServiceWorker {
 			logger.error("Cannot read configuration from requests.json file");
 			System.exit(-1);
 		}
-		if (configuration.nodes() < 0){
+		if (configuration.nodes() < 0) {
 			throw new IllegalArgumentException("Number of nodes must be 0 or greater");
 		}
-		return null;
+		return configuration;
 	}
 	
 	private NodeRequestConfig prepareNodesConfiguration(InitialConfiguration initialConfiguration) {

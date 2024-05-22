@@ -23,12 +23,9 @@ import java.util.stream.Collectors;
 public class RequestExecutor {
 	
 	private final ExecutorService executorService;
-	
-	private HttpClient httpClient;
-	
 	private final DataRepository dao;
-	
 	private final Logger logger = LoggerFactory.getLogger(RequestExecutor.class);
+	private HttpClient httpClient;
 	
 	public RequestExecutor(DataRepository dao) {
 		this.dao = dao;
@@ -41,27 +38,27 @@ public class RequestExecutor {
 			httpClient = HttpClient.newBuilder()
 					.executor(executorService)
 					.build();
-		Map<RequestInfo,List<NodeSingleExecutionStatistics>> requestsStatisticsMap = runAllRequests(dao.getRequestConfig());
+		Map<RequestInfo, List<NodeSingleExecutionStatistics>> requestsStatisticsMap = runAllRequests(dao.getRequestConfig());
 		List<NodeBundleExecutionStatistics> bundleExecutionStatistics = new ArrayList<>(dao.getRequestConfig().requests().size());
 		for (RequestInfo requestInfo : dao.getRequestConfig().requests()) {
 			List<NodeSingleExecutionStatistics> singleExecutionStatistics = requestsStatisticsMap.get(requestInfo);
-			NodeBundleExecutionStatistics bundleStatistics = new NodeBundleExecutionStatistics(singleExecutionStatistics,requestInfo);
+			NodeBundleExecutionStatistics bundleStatistics = new NodeBundleExecutionStatistics(singleExecutionStatistics, requestInfo);
 			bundleExecutionStatistics.add(bundleStatistics);
 		}
 		NodeExecutionStatistics statistics = new NodeExecutionStatistics(dao.getId(), bundleExecutionStatistics);
 		dao.setNodeExecutionStatistics(statistics);
 	}
-
-	private Map<RequestInfo,List<NodeSingleExecutionStatistics>> runAllRequests(NodeRequestConfig requestConfig) {
-		Map<RequestInfo,List<CompletableFuture<NodeSingleExecutionStatistics>>> requestsStatisticsMapFuture = new HashMap<>();
-		for(RequestInfo requestInfo: requestConfig.requests()){
+	
+	private Map<RequestInfo, List<NodeSingleExecutionStatistics>> runAllRequests(NodeRequestConfig requestConfig) {
+		Map<RequestInfo, List<CompletableFuture<NodeSingleExecutionStatistics>>> requestsStatisticsMapFuture = new HashMap<>();
+		for (RequestInfo requestInfo : requestConfig.requests()) {
 			requestsStatisticsMapFuture.put(requestInfo, new ArrayList<>(requestInfo.count()));
 		}
 		Long seed = Instant.now().getEpochSecond();
-		Iterator<RequestIteratorData> iterator = new RandomRequestIterator(dao.getRequestConfig(),seed);
+		Iterator<RequestIteratorData> iterator = new RandomRequestIterator(dao.getRequestConfig(), seed);
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 		int iteration = 0;
-		while(iterator.hasNext()){
+		while (iterator.hasNext()) {
 			final int finalIteration = iteration;
 			RequestIteratorData next = iterator.next();
 			scheduler.schedule(() -> {
@@ -70,14 +67,14 @@ public class RequestExecutor {
 			}, iteration * requestConfig.nextRequestDelay(), TimeUnit.MILLISECONDS);
 			iteration++;
 		}
-
+		
 		scheduler.shutdown();
 		try {
 			scheduler.awaitTermination(2, TimeUnit.HOURS);
 		} catch (InterruptedException e) {
 			logger.warn(e.getMessage());
 		}
-
+		
 		for (RequestInfo requestInfo : requestConfig.requests()) {
 			List<CompletableFuture<NodeSingleExecutionStatistics>> completableFutures = requestsStatisticsMapFuture.get(requestInfo);
 			CompletableFuture<Void> allOf = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
@@ -87,8 +84,8 @@ public class RequestExecutor {
 				logger.warn(e.getMessage());
 			}
 		}
-
-		Map<RequestInfo,List<NodeSingleExecutionStatistics>> requestsStatisticsMap = new HashMap<>();
+		
+		Map<RequestInfo, List<NodeSingleExecutionStatistics>> requestsStatisticsMap = new HashMap<>();
 		for (RequestInfo requestInfo : requestConfig.requests()) {
 			List<NodeSingleExecutionStatistics> executionStatistics = requestsStatisticsMapFuture.get(requestInfo).stream().map(future -> {
 				try {
@@ -97,20 +94,20 @@ public class RequestExecutor {
 					return null;
 				}
 			}).filter(Objects::nonNull).collect(Collectors.toList());
-			requestsStatisticsMap.put(requestInfo,executionStatistics);
+			requestsStatisticsMap.put(requestInfo, executionStatistics);
 		}
-
+		
 		return requestsStatisticsMap;
-
+		
 	}
-
+	
 	private CompletableFuture<NodeSingleExecutionStatistics> handleAsyncRequest(HttpRequest request, int i) {
 		Instant start = Instant.now();
 		return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
-			System.out.println("Sending request: " + request);
+			// System.out.println("Sending request: " + request); // TODO - usunąć to na koniec
 			Instant end = Instant.now();
 			Long elapsedTime = Duration.between(start, end).toMillis();
-			return new NodeSingleExecutionStatistics(i, elapsedTime, response.statusCode(),start);
+			return new NodeSingleExecutionStatistics(i, elapsedTime, response.statusCode(), start);
 		});
 	}
 	

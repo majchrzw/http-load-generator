@@ -55,14 +55,15 @@ public class MasterService implements ServiceWorker {
 		}
 		// generate statistics of run
 		processStatistics();
+		statisticsCalculator.generateAllStatistics(dao.getAllExecutionStatistics());
 	}
 	
 	private void processStatistics() {
 		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
 		// TODO-aktualnie dane z requestów są oddzielne dla każego node-a, trzeba je połączyć z powrotem albo rysować oddzielnie dla każdej maszyny
 		dao.getAllExecutionStatistics().forEach((uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
-		statisticsCalculator.drawResponseTimePlots(dao.getNodeExecutionStatistics());
-		statisticsCalculator.calculateStatistics(dao.getNodeExecutionStatistics());
+		//statisticsCalculator.drawResponseTimePlots(dao.getNodeExecutionStatistics());
+		//statisticsCalculator.calculateStatistics(dao.getNodeExecutionStatistics());
 	}
 	
 	private InitialConfiguration readInitialConfiguration() {

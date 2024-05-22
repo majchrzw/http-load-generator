@@ -12,24 +12,44 @@ import pl.majchrzw.loadtester.dto.statistics.NodeSingleExecutionStatistics;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class StatisticsCalculator {
 	
-	public void drawResponseTimePlots(NodeExecutionStatistics statistics) {
-		File statisticsDir = new File("./statistics");
+	
+	public void generateAllStatistics(HashMap<UUID, NodeExecutionStatistics> executionStatistics){
+		// create statistics dir if not exists
+		String statisticsDirName = "statistics";
+		File statisticsDir = new File(statisticsDirName);
 		if (!statisticsDir.exists()){
-			statisticsDir.mkdir();
+			System.out.println(statisticsDir.mkdir());
 		}
-		statistics.bundleExecutionStatistics().forEach(bundle -> drawResponseTimePlot(bundle, statistics.nodeId()));
+		String currentDate = new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date());
+		File dateDir = new File(statisticsDir, currentDate);
+		if (!dateDir.exists()){
+			System.out.println(dateDir.mkdir());
+		}
+		executionStatistics.keySet().forEach( key -> {
+			File subDir = new File(dateDir, key.toString());
+			if (!subDir.exists()){
+				System.out.println(subDir.mkdir());
+			}
+			// TODO - tutaj po stworzeniu folderów można robić statystyki
+			drawResponseTimePlots(executionStatistics.get(key), subDir);
+			calculateStatistics(executionStatistics.get(key), subDir);
+		});
+	}
+	
+	public void drawResponseTimePlots(NodeExecutionStatistics statistics, File dir) {
+		statistics.bundleExecutionStatistics().forEach(bundle -> drawResponseTimePlot(bundle, statistics.nodeId(), dir));
 	}
 	
 	// rysuje wykres czasu odpowiedzi na zapytania z jednego node-a i jednego request-a
-	private void drawResponseTimePlot(NodeBundleExecutionStatistics nodeBundleExecutionStatistics, UUID nodeid) {
+	private void drawResponseTimePlot(NodeBundleExecutionStatistics nodeBundleExecutionStatistics, UUID nodeId, File dir) {
 		int requestCount = nodeBundleExecutionStatistics.executionStatistics().size();
 		String requestName = nodeBundleExecutionStatistics.requestInfo().name();
 		long startTime = nodeBundleExecutionStatistics
@@ -62,18 +82,18 @@ public class StatisticsCalculator {
 		XYChart chart = QuickChart.getChart(requestName, "Czas od startu wykonywania [s]", "Czas odpowiedzi [ms]", "s", xData, yData);
 		// TODO - dać jakąś nazwę serii
 		try {
-			BitmapEncoder.saveBitmap(chart, "./statistics/chart-" + requestName + "-" + nodeid, BitmapEncoder.BitmapFormat.PNG);
+			BitmapEncoder.saveBitmap(chart, dir.getAbsolutePath() + "/" + requestName, BitmapEncoder.BitmapFormat.PNG);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
-	public void calculateStatistics(NodeExecutionStatistics statistics) {
+	public void calculateStatistics(NodeExecutionStatistics statistics, File dir) {
 		List<NodeRequestStatistics> nodeStatistics = statistics.bundleExecutionStatistics().stream().map(t -> calculateOneRequestStatistics(t, statistics.nodeId())).toList();
 		
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
-			File dataFile = new File("./statistics/data-" + statistics.nodeId() + ".json");
+			File dataFile = new File(dir.getAbsolutePath(), "data.json");
 			objectMapper.writeValue(dataFile, nodeStatistics);
 		} catch (Exception e) {
 			System.out.println(e.getMessage());

@@ -2,22 +2,22 @@
   "requests": [
     {
       "name": "getTest",
-      "uri": "25.64.215.158:8080",
+      "uri": "http://localhost:8080/demo",
       "method": "GET",
       "headers": {
         "Accept": "application/json",
         "Authorization": "Token",
         "Vary": "Value"
       },
-      "timeout": 2000,
-      "nextRequestDelay": 50,
-      "count": 500
+      "timeout": 5000,
+      "expectedReturnStatusCode": 200,
+      "count": 74
     }
   ],
-
-  "nodes": 1,
+  "nodes": 0,
+  "nextRequestDelay": 50,
   "defaultHeaders": {
-    "Default header": "Default Value",
+    "Default-header": "Default Value",
     "Vary": "Another one"
   }
 }

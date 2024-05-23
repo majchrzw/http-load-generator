@@ -11,6 +11,7 @@ import pl.majchrzw.loadtester.dto.Action;
 import pl.majchrzw.loadtester.dto.NodeStatusChange;
 import pl.majchrzw.loadtester.dto.Status;
 import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
+import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 
 
 @Component
@@ -38,8 +39,8 @@ public class NodeMessagingService implements DisposableBean {
 		logger.info("Transmitted id to master from node: " + startup);
 	}
 	
-	public void transmitStatistics() {
-		template.convertAndSend(statisticsTopic, dao.getStatistics());
+	public void transmitStatistics(NodeExecutionStatistics statistics) {
+		template.convertAndSend(statisticsTopic, statistics);
 		logger.info("Transmitted execution statistics to master from node: " + dao.getId());
 	}
 	

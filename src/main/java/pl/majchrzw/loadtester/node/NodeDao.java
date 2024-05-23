@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import pl.majchrzw.loadtester.dto.Status;
 import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
-import pl.majchrzw.loadtester.dto.statistics.NodeExecutionStatistics;
 import pl.majchrzw.loadtester.shared.DataRepository;
 
 import java.util.UUID;
@@ -16,8 +15,6 @@ public class NodeDao implements DataRepository {
 	private final UUID nodeId;
 	private Status currentStatus;
 	private NodeRequestConfig requestConfig;
-	
-	private NodeExecutionStatistics statistics;
 	
 	public NodeDao() {
 		this.currentStatus = Status.NEW;
@@ -37,29 +34,13 @@ public class NodeDao implements DataRepository {
 		return nodeId;
 	}
 	
+	@Override
 	public NodeRequestConfig getRequestConfig() {
 		return requestConfig;
 	}
 	
+	@Override
 	public void setRequestConfig(NodeRequestConfig config) {
 		requestConfig = config;
-	}
-	
-	@Override
-	public NodeExecutionStatistics getNodeExecutionStatistics() {
-		return statistics;
-	}
-	
-	@Override
-	public void setNodeExecutionStatistics(NodeExecutionStatistics statistics) {
-		this.statistics = statistics;
-	}
-	
-	public NodeExecutionStatistics getStatistics() {
-		return statistics;
-	}
-	
-	public void setStatistics(NodeExecutionStatistics statistics) {
-		this.statistics = statistics;
 	}
 }

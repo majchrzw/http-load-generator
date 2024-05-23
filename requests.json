@@ -9,39 +9,13 @@
         "Authorization": "Token",
         "Vary": "Value"
       },
-      "expectedReturnStatusCode": 200,
       "timeout": 2000,
-      "count": 500
-    },
-    {
-      "name": "postTest",
-      "uri": "https://httpbin.org/post",
-      "method": "POST",
-      "headers": {
-        "Accept": "application/json",
-        "Authorization": "Token",
-        "Vary": "Value"
-      },
       "expectedReturnStatusCode": 200,
-      "timeout": 2000,
-      "count": 500
-    },
-    {
-      "name": "deleteTest",
-      "uri": "https://httpbin.org/delete",
-      "method": "DELETE",
-      "headers": {
-        "Accept": "application/json",
-        "Authorization": "Token",
-        "Vary": "Value"
-      },
-      "expectedReturnStatusCode": 200,
-      "timeout": 2000,
-      "count": 500
+      "count": 74
     }
   ],
+  "nodes": 2,
   "nextRequestDelay": 50,
-  "nodes": 1,
   "defaultHeaders": {
     "Default-header": "Default Value",
     "Vary": "Another one"

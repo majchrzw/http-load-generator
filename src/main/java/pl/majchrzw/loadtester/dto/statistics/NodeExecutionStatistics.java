@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public record NodeExecutionStatistics(
 		UUID nodeId,
-		List<NodeBundleExecutionStatistics> bundleExecutionStatistics
+		List<BundleRequestStatistics> bundleExecutionStatistics
 ) {
 }

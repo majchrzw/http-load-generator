@@ -64,17 +64,8 @@ public class MasterDao implements DataRepository {
 		return requestConfig;
 	}
 	
+	@Override
 	public void setRequestConfig(NodeRequestConfig requestConfig) {
 		this.requestConfig = requestConfig;
-	}
-	
-	@Override
-	public NodeExecutionStatistics getNodeExecutionStatistics() {
-		return executionStatistics.get(masterId);
-	}
-	
-	@Override
-	public void setNodeExecutionStatistics(NodeExecutionStatistics statistics) {
-		executionStatistics.put(masterId, statistics);
 	}
 }

@@ -153,15 +153,16 @@ public class StatisticsCalculator {
 		double successCount = 0, executionCount = 0;
 		
 		for (var statistic : nodeBundleExecutionStatistics.executionStatistics()){
-			totalResponseTime += statistic.elapsedTime();
-			if ( statistic.elapsedTime() < minimalResponseTime){
-				minimalResponseTime = statistic.elapsedTime();
-			}
-			if ( statistic.elapsedTime() > maximalResponseTime){
-				maximalResponseTime = statistic.elapsedTime();
-			}
 			if ( statistic.success()){
 				successCount++;
+
+				totalResponseTime += statistic.elapsedTime();
+				if ( statistic.elapsedTime() < minimalResponseTime){
+					minimalResponseTime = statistic.elapsedTime();
+				}
+				if ( statistic.elapsedTime() > maximalResponseTime){
+					maximalResponseTime = statistic.elapsedTime();
+				}
 			}
 			if ( statistic.executed()){
 				executionCount++;

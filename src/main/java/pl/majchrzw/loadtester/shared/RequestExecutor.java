@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,11 +34,11 @@ public class RequestExecutor {
 	}
 	
 	public void run() {
-		logger.info("Running http requests load");
 		if (httpClient == null)
 			httpClient = HttpClient.newBuilder()
 					.executor(executorService)
 					.build();
+		logger.info("Running http requests in node: " + dao.getId());
 		Map<RequestInfo, List<NodeSingleExecutionStatistics>> requestsStatisticsMap = runAllRequests(dao.getRequestConfig());
 		List<NodeBundleExecutionStatistics> bundleExecutionStatistics = new ArrayList<>(dao.getRequestConfig().requests().size());
 		for (RequestInfo requestInfo : dao.getRequestConfig().requests()) {
@@ -57,15 +58,15 @@ public class RequestExecutor {
 		Long seed = Instant.now().getEpochSecond();
 		Iterator<RequestIteratorData> iterator = new RandomRequestIterator(dao.getRequestConfig(), seed);
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		int iteration = 0;
+		AtomicInteger iteration = new AtomicInteger(0);
 		while (iterator.hasNext()) {
-			final int finalIteration = iteration;
+			int finalIteration = iteration.get();
 			RequestIteratorData next = iterator.next();
 			scheduler.schedule(() -> {
 				CompletableFuture<NodeSingleExecutionStatistics> nodeSingleExecutionStatisticsCompletableFuture = handleAsyncRequest(next.request(), finalIteration, next.requestInfo().expectedReturnStatusCode());
 				requestsStatisticsMapFuture.get(next.requestInfo()).add(nodeSingleExecutionStatisticsCompletableFuture);
-			}, iteration * requestConfig.nextRequestDelay(), TimeUnit.MILLISECONDS);
-			iteration++;
+			}, finalIteration * requestConfig.nextRequestDelay(), TimeUnit.MILLISECONDS);
+			iteration.incrementAndGet();
 		}
 		
 		scheduler.shutdown();
@@ -93,7 +94,7 @@ public class RequestExecutor {
 				} catch (ExecutionException | InterruptedException e) {
 					return null;
 				}
-			}).filter(Objects::nonNull).collect(Collectors.toList());
+			}).filter(Objects::nonNull).toList();
 			requestsStatisticsMap.put(requestInfo, executionStatistics);
 		}
 		

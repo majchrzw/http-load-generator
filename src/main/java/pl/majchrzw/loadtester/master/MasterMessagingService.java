@@ -38,7 +38,6 @@ public class MasterMessagingService {
 	
 	@JmsListener(destination = readinessTopic)
 	public void receiveReadiness(NodeStatusChange msg) {
-		// TODO - do zmiany
 		switch (msg.action()) {
 			case START -> {
 				dao.setNodeStatus(msg.id(), Status.NEW);
@@ -54,7 +53,7 @@ public class MasterMessagingService {
 	
 	@JmsListener(destination = statisticsTopic)
 	public void receiveStatistics(NodeExecutionStatistics statistics) {
-		logger.info("Received execution statistics from node: " + statistics);
+		logger.info("Received execution statistics from node: " + statistics.nodeId());
 		dao.addNodeExecutionStatistics(statistics);
 	}
 }

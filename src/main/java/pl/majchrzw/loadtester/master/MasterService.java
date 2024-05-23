@@ -47,12 +47,12 @@ public class MasterService implements ServiceWorker {
 		logger.info("All nodes are ready, sending configuration");
 		messagingService.transmitConfiguration(nodeRequestConfig);
 		executor.run();
-		// wait for all nodes to finish
+
 		while (dao.numberOfFinishedNodes() < nodes) {
 			Thread.onSpinWait();
 		}
-		// generate statistics of run
-		processStatistics(); // TODO - to potem do usunięcia
+
+		//processStatistics(); // TODO - to potem do usunięcia
 		StatisticsCalculator calculator = new StatisticsCalculator();
 		calculator.generateAllStatistics(dao.getAllExecutionStatistics());
 	}
@@ -63,11 +63,10 @@ public class MasterService implements ServiceWorker {
 	}
 	
 	private InitialConfiguration readInitialConfiguration() {
-		// TODO - dodać na pewno walidację danych wejściowych: int większe od zera, enum dobrze ustalony itd..
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.registerModule(new Jdk8Module());
 		File file = new File("requests.json");
-		InitialConfiguration configuration = null;
+		InitialConfiguration configuration;
 		try {
 			if (file.exists()) {
 				configuration = objectMapper.readValue(file, InitialConfiguration.class);
@@ -77,10 +76,12 @@ public class MasterService implements ServiceWorker {
 			}
 		} catch (Exception e) {
 			logger.error("Cannot read configuration from requests.json file");
-			System.exit(-1);
+			throw new RuntimeException("Cannot read configuration from requests.json file");
 		}
-		if (configuration.nodes() < 0) {
-			throw new IllegalArgumentException("Number of nodes must be 0 or greater");
+		ConfigValidationStatus status = configuration.validate();
+		if (!status.valid()){
+			logger.error(status.message());
+			throw new RuntimeException(status.message());
 		}
 		return configuration;
 	}

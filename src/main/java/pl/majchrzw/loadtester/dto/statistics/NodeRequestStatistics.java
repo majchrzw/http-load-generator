@@ -8,6 +8,7 @@ public record NodeRequestStatistics(
 		long maximalRequestExecutionTime,
 		long requestCount,
 		double successRate,
+		double executionRate,
 		long requestTimeout,
 		String requestName
 ) {

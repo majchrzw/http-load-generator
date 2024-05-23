@@ -7,6 +7,7 @@ public record NodeSingleExecutionStatistics(
 		long elapsedTime,
 		int statusCode,
 		Instant startTime,
-		boolean success
+		boolean success,
+		boolean executed
 ) {
 }

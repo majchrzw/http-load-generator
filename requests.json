@@ -2,33 +2,46 @@
   "requests": [
     {
       "name": "getTest",
-      "uri": "http://localhost:8080/demo",
+      "uri": "https://httpbin.org/get",
       "method": "GET",
       "headers": {
         "Accept": "application/json",
         "Authorization": "Token",
         "Vary": "Value"
       },
-      "timeout": 2000,
       "expectedReturnStatusCode": 200,
-      "count": 74
+      "timeout": 2000,
+      "count": 500
     },
     {
-      "name": "getHello",
-      "uri": "http://localhost:8080/hello",
-      "method": "GET",
+      "name": "postTest",
+      "uri": "https://httpbin.org/post",
+      "method": "POST",
       "headers": {
         "Accept": "application/json",
         "Authorization": "Token",
-        "Vary": "HEHEHE"
+        "Vary": "Value"
       },
-      "timeout": 1008,
       "expectedReturnStatusCode": 200,
-      "count": 48
+      "timeout": 2000,
+      "count": 500
+    },
+    {
+      "name": "deleteTest",
+      "uri": "https://httpbin.org/delete",
+      "method": "DELETE",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Token",
+        "Vary": "Value"
+      },
+      "expectedReturnStatusCode": 200,
+      "timeout": 2000,
+      "count": 500
     }
   ],
-  "nodes": 0,
   "nextRequestDelay": 50,
+  "nodes": 1,
   "defaultHeaders": {
     "Default-header": "Default Value",
     "Vary": "Another one"

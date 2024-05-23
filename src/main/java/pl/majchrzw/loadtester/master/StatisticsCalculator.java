@@ -80,7 +80,7 @@ public class StatisticsCalculator {
 			XYSeries series = chart.addSeries(plotValues.nodeId.toString(), xData, yData);
 			series.setMarker(SeriesMarkers.CIRCLE);
 			// TODO - poprawić wybór koloru dla kolejnych serii - może jakoś uzależnić od ilości node-ów?
-			series.setMarkerColor(new Color( e * random.nextInt() % 255, e * random.nextInt() % 255, e * random.nextInt() % 255));
+			series.setMarkerColor(new Color( Math.abs(e * random.nextInt()) % 255, Math.abs(e * random.nextInt()) % 255, Math.abs(e * random.nextInt()) % 255));
 			z.getAndIncrement();
 		});
 		

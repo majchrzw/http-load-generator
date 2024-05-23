@@ -10,12 +10,12 @@
         "Vary": "Value"
       },
       "timeout": 2000,
-      "nextRequestDelay": 100,
-      "count": 100
-    },
+      "nextRequestDelay": 50,
+      "count": 500
+    }
   ],
 
-  "nodes": 0,
+  "nodes": 1,
   "defaultHeaders": {
     "Default header": "Default Value",
     "Vary": "Another one"

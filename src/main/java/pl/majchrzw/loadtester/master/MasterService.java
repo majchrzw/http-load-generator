@@ -24,13 +24,11 @@ public class MasterService implements ServiceWorker {
 	private final MasterDao dao;
 	
 	private final RequestExecutor executor;
-	private final StatisticsCalculator statisticsCalculator;
 	
-	public MasterService(MasterMessagingService messagingService, MasterDao dao, RequestExecutor executor, StatisticsCalculator statisticsCalculator) {
+	public MasterService(MasterMessagingService messagingService, MasterDao dao, RequestExecutor executor) {
 		this.messagingService = messagingService;
 		this.dao = dao;
 		this.executor = executor;
-		this.statisticsCalculator = statisticsCalculator;
 	}
 	
 	@Override
@@ -54,16 +52,14 @@ public class MasterService implements ServiceWorker {
 			Thread.onSpinWait();
 		}
 		// generate statistics of run
-		processStatistics();
-		statisticsCalculator.generateAllStatistics(dao.getAllExecutionStatistics());
+		processStatistics(); // TODO - to potem do usunięcia
+		StatisticsCalculator calculator = new StatisticsCalculator();
+		calculator.generateAllStatistics(dao.getAllExecutionStatistics());
 	}
 	
 	private void processStatistics() {
-		// TODO-tutaj może być jakaś obróbka tych danych np. zapisanie do pliku, albo wykresy
-		// TODO-aktualnie dane z requestów są oddzielne dla każego node-a, trzeba je połączyć z powrotem albo rysować oddzielnie dla każdej maszyny
+		// TODO - potem to usunąć
 		dao.getAllExecutionStatistics().forEach((uuid, statistics) -> System.out.println("Statistics for: " + uuid + " - " + statistics));
-		//statisticsCalculator.drawResponseTimePlots(dao.getNodeExecutionStatistics());
-		//statisticsCalculator.calculateStatistics(dao.getNodeExecutionStatistics());
 	}
 	
 	private InitialConfiguration readInitialConfiguration() {

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import pl.majchrzw.loadtester.dto.config.ConfigValidationStatus;
 import pl.majchrzw.loadtester.dto.config.InitialConfiguration;
 import pl.majchrzw.loadtester.dto.config.NodeRequestConfig;
 import pl.majchrzw.loadtester.dto.config.RequestInfo;
@@ -33,17 +34,16 @@ public class MasterService implements ServiceWorker {
 	
 	@Override
 	public void run() {
-		// read configuration
 		InitialConfiguration initialConfiguration = readInitialConfiguration();
 		int nodes = initialConfiguration.nodes();
-		// prepare requests
+
 		NodeRequestConfig nodeRequestConfig = prepareNodesConfiguration(initialConfiguration);
 		prepareMasterConfiguration(initialConfiguration);
-		// wait for all nodes to be ready
+
 		while (dao.numberOfReadyNodes() < nodes) {
 			Thread.onSpinWait();
 		}
-		// start execution
+
 		logger.info("All nodes are ready, sending configuration");
 		messagingService.transmitConfiguration(nodeRequestConfig);
 		executor.run();

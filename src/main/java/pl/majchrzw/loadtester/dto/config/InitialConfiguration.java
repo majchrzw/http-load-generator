@@ -14,6 +14,10 @@ public record InitialConfiguration(
 ) {
     public static Long MAXIMUM_DELAY = 10_000L;
     public ConfigValidationStatus validate() {
+        if(requests == null || requests.isEmpty()){
+            return new ConfigValidationStatus(false, "Requests list is empty");
+        }
+
         for (RequestInfo requestInfo : requests) {
            ConfigValidationStatus status = requestInfo.validate();
            if(!status.valid()){

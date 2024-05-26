@@ -5,7 +5,7 @@ spring:
         name: load-tester
     artemis:
         mode: native
-        broker-url: tcp://localhost:61616
+        broker-url: ${master-address}
     jms:
         pub-sub-domain: true
 logging:

@@ -167,7 +167,7 @@ public class StatisticsCalculator {
 			}
 		}
 		
-		long averageResponseTime = totalResponseTime / requestCount;
+		long averageResponseTime = totalResponseTime / successCount;
 		double successRate = (double) successCount / requestCount;
 		double executionRate = (double) executionCount / requestCount;
 		

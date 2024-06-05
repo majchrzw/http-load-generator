@@ -21,11 +21,11 @@ public class RequestBuilder {
 				((ArrayList<?>) value).forEach(val ->
 				{
 					String headerValue = "";
-					if ( val instanceof String){
+					if (val instanceof String) {
 						headerValue = String.valueOf(val);
-					} else if (val instanceof ArrayList){
+					} else if (val instanceof ArrayList) {
 						String tmp = String.valueOf(val);
-						headerValue = tmp.replace("[","").replace("]","");
+						headerValue = tmp.replace("[", "").replace("]", "");
 					}
 					builder.header(key.toString(), headerValue);
 				})

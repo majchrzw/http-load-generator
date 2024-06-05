@@ -19,7 +19,16 @@ public class RequestBuilder {
 		
 		requestInfo.headers().forEach((key, value) ->
 				((ArrayList<?>) value).forEach(val ->
-						builder.header(key.toString(), val.toString()))
+				{
+					String headerValue = "";
+					if ( val instanceof String){
+						headerValue = String.valueOf(val);
+					} else if (val instanceof ArrayList){
+						String tmp = String.valueOf(val);
+						headerValue = tmp.replace("[","").replace("]","");
+					}
+					builder.header(key.toString(), headerValue);
+				})
 		
 		);
 		

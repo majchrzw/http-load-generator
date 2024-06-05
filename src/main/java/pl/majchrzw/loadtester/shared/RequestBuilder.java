@@ -17,7 +17,11 @@ public class RequestBuilder {
 				.method(requestInfo.method().name(), bodyPublisher)
 				.timeout(Duration.ofMillis(requestInfo.timeout()));
 		
-		requestInfo.headers().forEach((key, value) -> ((ArrayList<?>) value).forEach(val -> builder.header(String.valueOf(key), String.valueOf(val))));
+		requestInfo.headers().forEach((key, value) ->
+				((ArrayList<?>) value).forEach(val ->
+						builder.header(key.toString(), val.toString()))
+		
+		);
 		
 		return builder.build();
 	}

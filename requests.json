@@ -1,20 +1,41 @@
 {
   "requests": [
     {
-      "name": "getTest",
-      "uri": "https://httpbin.org/get",
+      "name": "getRandom",
+      "uri": "http://10.169.169.221:8080/random",
       "method": "GET",
       "headers": {
-        "Accept": "application/json",
-        "Authorization": "Token",
-        "Vary": "Value"
+        "Accept": "Application/json"
       },
       "timeout": 2000,
       "expectedReturnStatusCode": 200,
-      "count": 74
+      "count": 20
+    },
+    {
+      "name": "postRandom",
+      "uri": "http://10.169.169.221:8080/save",
+      "method": "POST",
+      "body": "{\n\t\"value\":\"some value\"}",
+      "headers": {
+        "Content-Type": "Application/json"
+      },
+      "timeout": 2000,
+      "expectedReturnStatusCode": 200,
+      "count": 20
+    },
+    {
+      "name": "deleteRandom",
+      "uri": "http://10.169.169.221:8080/random",
+      "method": "DELETE",
+      "headers": {
+        "Accept": "Application/json"
+      },
+      "timeout": 2000,
+      "expectedReturnStatusCode": 200,
+      "count": 10
     }
   ],
-  "nodes": 2,
+  "nodes": 1,
   "nextRequestDelay": 50,
   "defaultHeaders": {
     "Default-header": "Default Value",

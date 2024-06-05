@@ -34,17 +34,22 @@ public class MasterService {
 	public void run() {
 		InitialConfiguration initialConfiguration = readInitialConfiguration();
 		int nodes = initialConfiguration.nodes();
-		
+		logger.info("Running master with id: " + dao.getId());
 		NodeRequestConfig nodeRequestConfig = prepareNodesConfiguration(initialConfiguration);
 		prepareMasterConfiguration(initialConfiguration);
 		
-		while (dao.numberOfReadyNodes() < nodes) {
-			Thread.onSpinWait();
+		try {
+			while (dao.numberOfReadyNodes() < nodes) {
+				Thread.sleep(500);
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 		
 		logger.info("All nodes are ready, sending configuration");
 		messagingService.transmitConfiguration(nodeRequestConfig);
 		NodeExecutionStatistics statistics = executor.run(dao.getRequestConfig(), dao.getId());
+		logger.info("Finished sending requests on: " + dao.getId());
 		dao.addNodeExecutionStatistics(statistics);
 		while (dao.numberOfFinishedNodes() < nodes) {
 			Thread.onSpinWait();

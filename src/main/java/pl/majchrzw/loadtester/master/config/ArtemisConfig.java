@@ -11,7 +11,8 @@ public class ArtemisConfig implements ArtemisConfigurationCustomizer {
 	@Override
 	public void customize(org.apache.activemq.artemis.core.config.Configuration configuration) {
 		try {
-			configuration.addAcceptorConfiguration("remote", "tcp://0.0.0.0:61616");
+			configuration.addAcceptorConfiguration("tcp", "tcp://0.0.0.0:61616");
+			configuration.setPersistenceEnabled(false);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

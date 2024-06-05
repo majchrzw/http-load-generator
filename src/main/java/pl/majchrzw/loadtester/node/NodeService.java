@@ -28,8 +28,12 @@ public class NodeService {
 	
 	public void run() {
 		nodeMessagingService.transmitReadiness();
-		while (dao.getCurrentStatus().equals(Status.NEW)) {
-			Thread.onSpinWait();
+		try {
+			while (!dao.getCurrentStatus().equals(Status.RECEIVED_CONFIGURATION)) {
+				Thread.sleep(500);
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 		NodeExecutionStatistics statistics = executor.run(dao.getRequestConfig(), dao.getId());
 		nodeMessagingService.transmitStatistics(statistics);

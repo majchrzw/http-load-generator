@@ -24,8 +24,9 @@ public class RequestBuilder {
 					if (val instanceof String) {
 						headerValue = String.valueOf(val);
 					} else if (val instanceof ArrayList) {
-						String tmp = String.valueOf(val);
-						headerValue = tmp.replace("[", "").replace("]", "");
+						headerValue = String.valueOf(val)
+								.replace("[", "")
+								.replace("]", "");
 					}
 					builder.header(key.toString(), headerValue);
 				})
